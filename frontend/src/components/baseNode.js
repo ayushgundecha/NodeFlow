@@ -2,8 +2,15 @@ import React from "react";
 import NodeHandle from "./nodeHandle";
 import { Tooltip } from "@mui/material";
 import { ReactComponent as Cancel } from "../Assets/cancel.svg";
+import { useStore } from "../store";
 
 const BaseNode = ({ id, title, description = "", handles = [], renderContent = null, Icon }) => {
+  const removeNode = useStore((state) => state.removeNode);
+
+  const handleDelete = () => {
+    removeNode(id);
+  };
+
   return (
     <div
       className="relative w-auto min-w-[300px] max-w-[400px] p-5 rounded-3xl shadow-lg border border-gray-300 bg-gray-50 
@@ -17,6 +24,7 @@ const BaseNode = ({ id, title, description = "", handles = [], renderContent = n
         <Tooltip title="Delete Node">
           <button
             className="p-2 rounded-full text-gray-500 hover:text-red-500 hover:bg-red-100 transition-all duration-300 delete-button"
+            onClick={handleDelete}
           >
             <Cancel className="w-5 h-5 fill-current" />
           </button>

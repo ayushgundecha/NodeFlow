@@ -1,0 +1,83 @@
+/* Container for the flow with minimal styling */
+.flow-container {
+    width: 100vw;
+    height: 70vh;
+    overflow: hidden;
+    border: 1px solid rgba(97, 218, 251, 0.2); /* Subtle border */
+    border-radius: 8px;
+    background: none; /* Transparent background */
+    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    transition: box-shadow 0.3s ease-in-out;
+  }
+  
+  .flow-container:hover {
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2); /* Slightly stronger shadow on hover */
+  }
+  
+  /* Custom ReactFlow transition */
+  .react-flow-custom {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  /* Fade-in animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  /* Styling the handles with a clean, minimal look */
+  .react-flow__handle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(97, 218, 251, 0.4); /* Subtle border */
+    background: none; /* Transparent center */
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  
+  /* Hover effect on handle - scales up slightly */
+  .react-flow__handle:hover {
+    transform: scale(1.2);
+    box-shadow: 0px 0px 5px rgba(97, 218, 251, 0.5);
+    border-color: rgba(97, 218, 251, 0.8); /* Slightly brighter on hover */
+  }
+  
+  /* Styling the connection paths (arrows) */
+  .react-flow__connection-path {
+    stroke: rgba(97, 218, 251, 0.5); /* Subtle stroke color */
+    stroke-width: 1.5;
+    stroke-dasharray: 4, 4; /* Light dashed line */
+    transition: stroke-dashoffset 0.2s ease-in-out, stroke 0.2s ease-in-out;
+  }
+  
+  /* On hover of the connection path, make it slightly brighter */
+  .react-flow__connection-path:hover {
+    stroke: rgba(97, 218, 251, 0.8);
+    opacity: 1; /* Full opacity on hover */
+  }
+  
+  /* Active connection path with a subtle animation */
+  .react-flow__connection-path[data-connection="active"] {
+    stroke: rgba(97, 218, 251, 0.8); /* Slightly brighter for active state */
+    stroke-width: 2;
+    stroke-dasharray: 3, 6;
+    animation: subtle-glow 1.5s infinite ease-in-out; /* Gentle glow animation */
+  }
+  
+  /* Gentle glowing effect for active connection path */
+  @keyframes subtle-glow {
+    0% {
+      stroke: rgba(97, 218, 251, 0.8);
+    }
+    50% {
+      stroke: rgba(97, 218, 251, 0.4);
+    }
+    100% {
+      stroke: rgba(97, 218, 251, 0.8);
+    }
+  }
+  

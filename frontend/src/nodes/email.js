@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import BaseNode from "./baseNode";
+import BaseNode from "../components/baseNode";
 import { Tooltip, TextField } from "@mui/material";
-import { ReactComponent as EmailIcon } from "../Assets/InputIcon.svg";
+import { ReactComponent as MailIcon } from "../Assets/MailIcon.svg";
 
 export const EmailFormatterNode = ({ id, data }) => {
   const [emailFormat, setEmailFormat] = useState(data?.emailFormat || "{name}@example.com");
@@ -36,7 +36,7 @@ export const EmailFormatterNode = ({ id, data }) => {
         { type: "source", position: "right", id: `${id}-output` },
       ]}
       renderContent={renderContent}
-      Icon={EmailIcon}
+      Icon={MailIcon}
     />
   );
 };

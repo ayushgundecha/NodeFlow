@@ -11,7 +11,7 @@ export const DraggableNode = ({ type, label, IconComponent, iconColor }) => {
 
   return (
     <div
-        className="flex flex-col items-center justify-center w-20 h-20 rounded-lg shadow-md bg-white border border- hover:shadow-xl transition-transform transform hover:scale-105 cursor-grab"
+        className="flex flex-col items-center justify-center p-2 min-w-20 max-w-max h-20 rounded-lg shadow-md bg-white border border- hover:shadow-xl transition-transform transform hover:scale-105 cursor-grab"
         onDragStart={(event) => onDragStart(event, type)}
         onDragEnd={(event) => (event.target.style.cursor = 'grab')}
         draggable

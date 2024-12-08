@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import BaseNode from "./baseNode";
+import BaseNode from "../components/baseNode";
 import { TextField, Select, MenuItem, FormControl, InputLabel, Tooltip } from "@mui/material";
 import { ReactComponent as OutputIcon } from "../Assets/OutputIcon.svg";
 

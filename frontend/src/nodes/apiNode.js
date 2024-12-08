@@ -1,35 +1,27 @@
 import React, { useState } from "react";
 import { TextField, Select, MenuItem, FormControl, InputLabel, Tooltip } from "@mui/material";
-import BaseNode from "./baseNode";
+import BaseNode from "../components/baseNode";
 import { ReactComponent as CodeIcon } from "../Assets/CodeIcon.svg";
 
 export const ApiFetchNode = ({ id, data }) => {
-  const { fields = {}, updateField } = data || {};
+  const [fields, setFields] = useState(data?.fields || {});
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-
-  // Generic change handler
+  // Generic change handler for field updates
   const handleFieldChange = (fieldName, value) => {
-    if (updateField) {
-      updateField(fieldName, value);
-    }
+    setFields((prevFields) => ({
+      ...prevFields,
+      [fieldName]: value,
+    }));
   };
 
-  // JSON validation helper
-  const handleJsonFieldChange = (fieldName, value) => {
-    try {
-      JSON.parse(value); // Validate JSON format
-      handleFieldChange(fieldName, value);
-    } catch (err) {
-      console.error("Invalid JSON:", err); // Log errors for debugging
-    }
-  };
 
+  // Render the node content
   const renderContent = () => (
     <div className="space-y-4">
       {/* API URL */}
       <div>
-        <Tooltip title="Enter the API endpoint URL" >
+        <Tooltip title="Enter the API endpoint URL">
           <TextField
             label="API URL"
             variant="outlined"
@@ -39,8 +31,8 @@ export const ApiFetchNode = ({ id, data }) => {
             onChange={(e) => handleFieldChange("apiUrl", e.target.value)}
             placeholder="https://example.com/api"
             sx={{
-              '& .MuiInputBase-input': { fontSize: '14px' }, // Input text
-              '& .MuiInputLabel-root': { fontSize: '14px' }, // Label text
+              '& .MuiInputBase-input': { fontSize: '14px' },
+              '& .MuiInputLabel-root': { fontSize: '14px' },
             }}
           />
         </Tooltip>
@@ -48,7 +40,7 @@ export const ApiFetchNode = ({ id, data }) => {
 
       {/* HTTP Method */}
       <div>
-        <Tooltip title="Select the HTTP method"  disableHoverListener={dropdownOpen}>
+        <Tooltip title="Select the HTTP method" disableHoverListener={dropdownOpen}>
           <FormControl fullWidth size="small">
             <InputLabel
               id={`${id}-method-label`}
@@ -62,32 +54,21 @@ export const ApiFetchNode = ({ id, data }) => {
               value={fields.method || "GET"}
               onChange={(e) => handleFieldChange("method", e.target.value)}
               label="HTTP Method"
-              sx={{
-                fontSize: "14px",
-              }}
+              sx={{ fontSize: "14px" }}
               MenuProps={{
                 PaperProps: {
-                  style: {
-                    maxHeight: 200, // Limit dropdown height
-                  },
+                  style: { maxHeight: 200 }, // Limit dropdown height
                 },
               }}
               onOpen={() => setDropdownOpen(true)}
               onClose={() => setDropdownOpen(false)}
               className="nodrag"
             >
-              <MenuItem value="GET" sx={{ fontSize: "14px" }}>
-                GET
-              </MenuItem>
-              <MenuItem value="POST" sx={{ fontSize: "14px" }}>
-                POST
-              </MenuItem>
-              <MenuItem value="PUT" sx={{ fontSize: "14px" }}>
-                PUT
-              </MenuItem>
-              <MenuItem value="DELETE" sx={{ fontSize: "14px" }}>
-                DELETE
-              </MenuItem>
+              {["GET", "POST", "PUT", "DELETE"].map((method) => (
+                <MenuItem key={method} value={method} sx={{ fontSize: "14px" }}>
+                  {method}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Tooltip>
@@ -95,7 +76,7 @@ export const ApiFetchNode = ({ id, data }) => {
 
       {/* Headers */}
       <div>
-        <Tooltip title="Enter JSON headers" >
+        <Tooltip title="Enter JSON headers">
           <TextField
             label="Headers (JSON)"
             multiline
@@ -104,11 +85,11 @@ export const ApiFetchNode = ({ id, data }) => {
             fullWidth
             size="small"
             value={fields.headers || ""}
-            onChange={(e) => handleJsonFieldChange("headers", e.target.value)}
+            onChange={(e) => handleFieldChange("headers", e.target.value)}
             placeholder='{"Authorization": "Bearer token"}'
             sx={{
-              '& .MuiInputBase-input': { fontSize: '14px' }, // Input text
-              '& .MuiInputLabel-root': { fontSize: '14px' }, // Label text
+              '& .MuiInputBase-input': { fontSize: '14px' },
+              '& .MuiInputLabel-root': { fontSize: '14px' },
             }}
           />
         </Tooltip>
@@ -116,7 +97,7 @@ export const ApiFetchNode = ({ id, data }) => {
 
       {/* Body */}
       <div>
-        <Tooltip title="Enter JSON body" >
+        <Tooltip title="Enter JSON body">
           <TextField
             label="Body (JSON)"
             multiline
@@ -125,11 +106,11 @@ export const ApiFetchNode = ({ id, data }) => {
             fullWidth
             size="small"
             value={fields.body || ""}
-            onChange={(e) => handleJsonFieldChange("body", e.target.value)}
+            onChange={(e) => handleFieldChange("body", e.target.value)}
             placeholder='{"key": "value"}'
             sx={{
-              '& .MuiInputBase-input': { fontSize: '14px' }, // Input text
-              '& .MuiInputLabel-root': { fontSize: '14px' }, // Label text
+              '& .MuiInputBase-input': { fontSize: '14px' },
+              '& .MuiInputLabel-root': { fontSize: '14px' },
             }}
           />
         </Tooltip>

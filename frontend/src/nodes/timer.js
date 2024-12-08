@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import BaseNode from "./baseNode";
+import BaseNode from "../components/baseNode";
 import { Tooltip, TextField } from "@mui/material";
-import { ReactComponent as ClockIcon } from "../Assets/InputIcon.svg";
+import { ReactComponent as ClockIcon } from "../Assets/ClockIcon.svg";
 
 export const TimerNode = ({ id, data }) => {
   const [delay, setDelay] = useState(data?.delay || 0);

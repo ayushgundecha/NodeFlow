@@ -1,89 +1,129 @@
 // src/nodes/ImageProcessingNode.js
-import React from "react";
-import BaseNode from "./baseNode";
+import React, { useState } from "react";
+import { TextField, Select, MenuItem, FormControl, InputLabel, Tooltip, Button } from "@mui/material";
+import BaseNode from "../components/baseNode";
 import { ReactComponent as PhotographIcon } from "../Assets/PhotographIcon.svg";
 
 export const ImageProcessingNode = ({ id, data }) => {
-  const { fields = {}, updateField } = data || {};
+  const [fields, setFields] = useState(data?.fields || {});
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  
 
-  // Reusable handler to update field values
+  // Update field values
   const handleFieldChange = (fieldName, value) => {
-    if (updateField) {
-      updateField(fieldName, value);
-    }
+    setFields((prevFields) => ({
+      ...prevFields,
+      [fieldName]: value,
+    }));
   };
 
+  // Handle file upload
   const handleFileChange = (e) => {
     const file = e.target.files.length ? e.target.files[0] : null;
     handleFieldChange("image", file);
   };
 
+  // Render node content
   const renderContent = () => (
     <div className="space-y-4">
       {/* Upload Image */}
       <div>
-        <label htmlFor={`${id}-file`} className="block text-sm font-medium text-gray-700">
-          Upload Image
-        </label>
-        <input
-          id={`${id}-file`}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="mt-1 block w-full text-sm text-gray-500 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-          aria-label="Upload Image"
-        />
+        <Tooltip title="Upload an image to process">
+          <Button
+            variant="contained"
+            component="label"
+            size="small"
+            sx={{ fontSize: "10px" }}
+          >
+            Upload Image
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleFileChange}
+              aria-label="Upload Image"
+            />
+          </Button>
+        </Tooltip>
       </div>
 
       {/* Processing Type */}
       <div>
-        <label htmlFor={`${id}-processingType`} className="block text-sm font-medium text-gray-700">
-          Processing Type
-        </label>
-        <select
-          id={`${id}-processingType`}
-          value={fields.processingType || "Resize"}
-          onChange={(e) => handleFieldChange("processingType", e.target.value)}
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          aria-label="Processing Type"
-        >
-          <option value="Resize">Resize</option>
-          <option value="Filter">Filter</option>
-          <option value="Compress">Compress</option>
-        </select>
+        <Tooltip title="Select the type of processing" disableHoverListener={dropdownOpen}>
+          <FormControl fullWidth size="small">
+            <InputLabel
+              id={`${id}-processingType-label`}
+              sx={{ fontSize: "14px" }}
+            >
+              Processing Type
+            </InputLabel>
+            <Select
+              labelId={`${id}-processingType-label`}
+              id={`${id}-processingType`}
+              value={fields.processingType || "Filter"}
+              onChange={(e) => handleFieldChange("processingType", e.target.value)}
+              label="Processing Type"
+              sx={{ fontSize: "14px" }}
+              MenuProps={{
+                PaperProps: {
+                  style: { maxHeight: 200 },
+                },
+              }}
+              onOpen={() => setDropdownOpen(true)}
+              onClose={() => setDropdownOpen(false)}
+              className="nodrag"
+            >
+              <MenuItem value="Resize" sx={{ fontSize: "14px" }}>
+                Resize
+              </MenuItem>
+              <MenuItem value="Filter" sx={{ fontSize: "14px" }}>
+                Filter
+              </MenuItem>
+              <MenuItem value="Compress" sx={{ fontSize: "14px" }}>
+                Compress
+              </MenuItem>
+            </Select>
+          </FormControl>
+        </Tooltip>
       </div>
 
       {/* Conditional rendering for Resize options */}
       {fields.processingType === "Resize" && (
         <div className="flex space-x-4">
           <div>
-            <label htmlFor={`${id}-width`} className="block text-sm font-medium text-gray-700">
-              Width
-            </label>
-            <input
-              id={`${id}-width`}
-              type="number"
-              placeholder="Width in pixels"
-              value={fields.width || ""}
-              onChange={(e) => handleFieldChange("width", e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              aria-label="Width"
-            />
+            <Tooltip title="Enter the desired width in pixels">
+              <TextField
+                label="Width (px)"
+                variant="outlined"
+                size="small"
+                fullWidth
+                value={fields.width || ""}
+                onChange={(e) => handleFieldChange("width", e.target.value)}
+                placeholder="e.g., 1920"
+                sx={{
+                  "& .MuiInputBase-input": { fontSize: "14px" },
+                  "& .MuiInputLabel-root": { fontSize: "14px" },
+                }}
+              />
+            </Tooltip>
           </div>
 
           <div>
-            <label htmlFor={`${id}-height`} className="block text-sm font-medium text-gray-700">
-              Height
-            </label>
-            <input
-              id={`${id}-height`}
-              type="number"
-              placeholder="Height in pixels"
-              value={fields.height || ""}
-              onChange={(e) => handleFieldChange("height", e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              aria-label="Height"
-            />
+            <Tooltip title="Enter the desired height in pixels">
+              <TextField
+                label="Height (px)"
+                variant="outlined"
+                size="small"
+                fullWidth
+                value={fields.height || ""}
+                onChange={(e) => handleFieldChange("height", e.target.value)}
+                placeholder="e.g., 1080"
+                sx={{
+                  "& .MuiInputBase-input": { fontSize: "14px" },
+                  "& .MuiInputLabel-root": { fontSize: "14px" },
+                }}
+              />
+            </Tooltip>
           </div>
         </div>
       )}
@@ -104,3 +144,5 @@ export const ImageProcessingNode = ({ id, data }) => {
     />
   );
 };
+
+export default ImageProcessingNode;

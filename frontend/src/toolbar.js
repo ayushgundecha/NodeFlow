@@ -6,6 +6,9 @@ import { ReactComponent as OutputIcon } from "./Assets/OutputIcon.svg";
 import { ReactComponent as DocumentTextIcon } from "./Assets/DocumentTextIcon.svg";
 import { ReactComponent as CodeIcon } from "./Assets/CodeIcon.svg";
 import { ReactComponent as PhotographIcon } from "./Assets/PhotographIcon.svg";
+import { ReactComponent as TimerIcon } from "./Assets/ClockIcon.svg"; 
+import { ReactComponent as MailIcon } from "./Assets/MailIcon.svg"; 
+import { ReactComponent as TransformIcon } from "./Assets/TransformIcon.svg"; 
 
 
 export const PipelineToolbar = ({ id }) => {
@@ -18,9 +21,9 @@ export const PipelineToolbar = ({ id }) => {
                 <DraggableNode type="text" label="Text" IconComponent={DocumentTextIcon} iconColor="#F59E0B" /> {/* Yellow */}
                 <DraggableNode type="api" label="API" IconComponent={CodeIcon} iconColor="#EC4899" /> {/* Pink */}
                 <DraggableNode type="imageProcessing" label="Image" IconComponent={PhotographIcon} iconColor="#3B82F6" /> {/* Blue */}
-                <DraggableNode type="timer" label="Timer" IconComponent={CodeIcon} iconColor="#7C3AED" /> {/* Violet */}
-                <DraggableNode type="emailFormatter" label="Email Formatter" IconComponent={CodeIcon} iconColor="#F87171" /> {/* Light Red */}
-                <DraggableNode type="textTransformation" label="Transformation" IconComponent={CodeIcon} iconColor="#34D399" /> {/* Light Green */}
+                <DraggableNode type="timer" label="Timer" IconComponent={TimerIcon} iconColor="#7C3AED" /> {/* Violet */}
+                <DraggableNode type="emailFormatter" label="Email Formatter" IconComponent={MailIcon} iconColor="#F87171" /> {/* Light Red */}
+                <DraggableNode type="textTransformation" label="Transformation" IconComponent={TransformIcon} iconColor="#34D399" /> {/* Light Green */}
             </div>
         </div>
     );
