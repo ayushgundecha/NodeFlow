@@ -10,6 +10,12 @@ import { InputNode } from './nodes/inputNode';
 import { LLMNode } from './nodes/llmNode';
 import { OutputNode } from './nodes/outputNode';
 import { TextNode } from './nodes/textNode';
+import { ApiFetchNode } from './nodes/apiNode';
+import { ImageProcessingNode } from './nodes/imageProcessingNode';
+import { TimerNode } from './nodes/timer';
+import { EmailFormatterNode } from './nodes/email';
+import { TextTransformationNode } from './nodes/transformation';
+
 
 import 'reactflow/dist/style.css';
 
@@ -20,6 +26,13 @@ const nodeTypes = {
   llm: LLMNode,
   customOutput: OutputNode,
   text: TextNode,
+  api: ApiFetchNode,
+  imageProcessing : ImageProcessingNode,
+  timer : TimerNode,
+  emailFormatter : EmailFormatterNode,
+  textTransformation : TextTransformationNode
+
+
 };
 
 const selector = (state) => ({

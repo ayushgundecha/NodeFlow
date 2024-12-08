@@ -1,47 +1,86 @@
-// inputNode.js
-
-import { useState } from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { useState } from "react";
+import { Position } from "reactflow";
+import BaseNode from "./baseNode";
+import { TextField, Select, MenuItem, FormControl, InputLabel, Tooltip } from "@mui/material";
+import { ReactComponent as InputIcon } from "../Assets/InputIcon.svg";
 
 export const InputNode = ({ id, data }) => {
-  const [currName, setCurrName] = useState(data?.inputName || id.replace('customInput-', 'input_'));
-  const [inputType, setInputType] = useState(data.inputType || 'Text');
+  const [currName, setCurrName] = useState(data?.inputName || `input_${id.replace("customInput-", "")}`);
+  const [inputType, setInputType] = useState(data?.inputType || "Text");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const handleNameChange = (e) => {
-    setCurrName(e.target.value);
-  };
-
-  const handleTypeChange = (e) => {
-    setInputType(e.target.value);
-  };
-
-  return (
-    <div style={{width: 200, height: 80, border: '1px solid black'}}>
+  const renderContent = () => (
+    <div className="space-y-4">
+      {/* Field Name Input */}
       <div>
-        <span>Input</span>
-      </div>
-      <div>
-        <label>
-          Name:
-          <input 
-            type="text" 
-            value={currName} 
-            onChange={handleNameChange} 
+        <Tooltip title="Enter the field name" disableHoverListener={dropdownOpen}>
+          <TextField
+            label="Field Name"
+            variant="outlined"
+            fullWidth
+            size="small"
+            value={currName}
+            onChange={(e) => setCurrName(e.target.value)}
+            sx={{
+              '& .MuiInputBase-input': { fontSize: '14px' }, // Input text
+              '& .MuiInputLabel-root': { fontSize: '14px' }, // Label text
+            }}
           />
-        </label>
-        <label>
-          Type:
-          <select value={inputType} onChange={handleTypeChange}>
-            <option value="Text">Text</option>
-            <option value="File">File</option>
-          </select>
-        </label>
+        </Tooltip>
       </div>
-      <Handle
-        type="source"
-        position={Position.Right}
-        id={`${id}-value`}
-      />
+
+      {/* Input Type Dropdown */}
+      <div>
+        <Tooltip title="Select the input type" disableHoverListener={dropdownOpen}>
+          <FormControl
+            fullWidth
+            size="small"
+            variant="outlined"
+            sx={{
+              "& .MuiInputBase-input": { fontSize: "14px" }, // Consistent font size for input
+              "& .MuiInputLabel-root": { fontSize: "14px" }, // Consistent font size for label
+              "& .MuiMenuItem-root": { fontSize: "14px" }, // Consistent font size for dropdown items
+            }}
+          >
+            <InputLabel id={`${id}-type-label`}>Type</InputLabel>
+            <Select
+              labelId={`${id}-type-label`}
+              id={`${id}-type`}
+              value={inputType}
+              onChange={(e) => setInputType(e.target.value)}
+              label="Type"
+              className="nodrag"
+              onOpen={() => setDropdownOpen(true)}
+              onClose={() => setDropdownOpen(false)}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxHeight: 200, // Dropdown height
+                    width: 150, // Dropdown width
+                  },
+                },
+              }}
+            >
+              {/* Menu Items */}
+              <MenuItem value="Text">Text</MenuItem>
+              <MenuItem value="File">File</MenuItem>
+            </Select>
+          </FormControl>
+        </Tooltip>
+      </div>
     </div>
   );
-}
+
+  return (
+    <BaseNode
+      id={id}
+      title="Input"
+      description="Define input properties"
+      handles={[{ type: "source", position: Position.Right, id: `${id}-value` }]}
+      renderContent={renderContent}
+      Icon={InputIcon}
+    />
+  );
+};
+
+export default InputNode;
