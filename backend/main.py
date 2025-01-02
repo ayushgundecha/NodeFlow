@@ -1,6 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ValidationError
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.requests import Request
 from typing import List, Dict, Optional
 from collections import defaultdict, deque
 
@@ -10,11 +13,18 @@ app = FastAPI()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace "*" with specific domains like "http://localhost:3000" if needed
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
+
+# Sets the templates directory to the `build` folder from `npm run build`
+# this is where you'll find the index.html file.
+templates = Jinja2Templates(directory="public")
+
+# Mounts the `static` folder within the `build` folder to the `/static` route.
+app.mount('/static', StaticFiles(directory="public/static"), 'static')
 
 # Pydantic models for request validation
 class Node(BaseModel):
@@ -97,3 +107,7 @@ def check_if_dag(nodes: List[Node], edges: List[Edge]) -> bool:
 
     # If all nodes are visited, it is a DAG
     return visited_count == len(nodes)
+
+@app.get("/{rest_of_path:path}")
+async def react_app(req: Request, rest_of_path: str):
+    return templates.TemplateResponse('index.html', { 'request': req })

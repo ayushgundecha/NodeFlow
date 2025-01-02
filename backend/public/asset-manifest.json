@@ -1,0 +1,23 @@
+{
+  "files": {
+    "main.css": "/static/css/main.3babe480.css",
+    "main.js": "/static/js/main.27e317a9.js",
+    "static/media/CodeIcon.svg": "/static/media/CodeIcon.2a97c78975481e4519692d6d82a214ab.svg",
+    "index.html": "/index.html",
+    "static/media/ChipIcon.svg": "/static/media/ChipIcon.13fad157ccd9e189a0a58e401607baf1.svg",
+    "static/media/cancel.svg": "/static/media/cancel.2dba322c6ae1f4a7536f3719dd05cb82.svg",
+    "static/media/ClockIcon.svg": "/static/media/ClockIcon.fd5cc71197fe2354812809ec745ebb20.svg",
+    "static/media/DocumentTextIcon.svg": "/static/media/DocumentTextIcon.eefed914269f3d8a9b9750120619b07e.svg",
+    "static/media/TransformIcon.svg": "/static/media/TransformIcon.2b335a0dad9a83e6abe4ef3b3dec436a.svg",
+    "static/media/OutputIcon.svg": "/static/media/OutputIcon.abf71311dd129018c3a1506273fd9405.svg",
+    "static/media/InputIcon.svg": "/static/media/InputIcon.ce724b2073fce662df0186654609186f.svg",
+    "static/media/MailIcon.svg": "/static/media/MailIcon.9d867a5bb78512ec7efe790c7fbbc773.svg",
+    "static/media/PhotographIcon.svg": "/static/media/PhotographIcon.64698f05f06615286283fce49ee7fbab.svg",
+    "main.3babe480.css.map": "/static/css/main.3babe480.css.map",
+    "main.27e317a9.js.map": "/static/js/main.27e317a9.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.3babe480.css",
+    "static/js/main.27e317a9.js"
+  ]
+}
