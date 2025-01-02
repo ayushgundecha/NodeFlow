@@ -48,36 +48,13 @@
   
   /* Styling the connection paths (arrows) */
   .react-flow__connection-path {
-    stroke: rgba(97, 218, 251, 0.5); /* Subtle stroke color */
+    stroke: #6366F1; /* Subtle stroke color */
     stroke-width: 1.5;
     stroke-dasharray: 4, 4; /* Light dashed line */
     transition: stroke-dashoffset 0.2s ease-in-out, stroke 0.2s ease-in-out;
   }
   
-  /* On hover of the connection path, make it slightly brighter */
-  .react-flow__connection-path:hover {
-    stroke: rgba(97, 218, 251, 0.8);
-    opacity: 1; /* Full opacity on hover */
-  }
-  
-  /* Active connection path with a subtle animation */
-  .react-flow__connection-path[data-connection="active"] {
-    stroke: rgba(97, 218, 251, 0.8); /* Slightly brighter for active state */
-    stroke-width: 2;
-    stroke-dasharray: 3, 6;
-    animation: subtle-glow 1.5s infinite ease-in-out; /* Gentle glow animation */
-  }
-  
-  /* Gentle glowing effect for active connection path */
-  @keyframes subtle-glow {
-    0% {
-      stroke: rgba(97, 218, 251, 0.8);
-    }
-    50% {
-      stroke: rgba(97, 218, 251, 0.4);
-    }
-    100% {
-      stroke: rgba(97, 218, 251, 0.8);
-    }
-  }
+
+
+
   

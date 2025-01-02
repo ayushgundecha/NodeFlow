@@ -3,10 +3,13 @@ import { Handle, Position } from "reactflow";
 
 const NodeHandle = ({ id, type, position, style }) => {
   const defaultStyle = {
-    background: "linear-gradient(90deg, rgba(33, 150, 243, 1) 0%, rgba(0, 212, 255) 100%)",
-    borderRadius: "50%",
-    boxShadow: "0 0 10px rgba(33, 150, 243, 0.8)",
-    animation: "pulse 1.5s infinite",
+    background: "white", // Black fill
+    border: "1px solid black", // Black border
+    borderRadius: "50%", // Circular shape
+    width: "10px", // Size of the handle
+    height: "10px", // Size of the handle
+    position: "absolute", // Ensures absolute positioning
+    right : "-5px",
   };
 
   return (
