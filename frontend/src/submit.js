@@ -2,13 +2,17 @@ import { useStore } from './store';
 import { Button, Box, Snackbar, Alert } from '@mui/material';
 import { useState } from 'react';
 
+
+
 export const SubmitButton = () => {
     const { nodes, edges } = useStore();
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'info' });
 
+    const API_URL = window.location.origin;
+
     const handleSubmit = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/pipelines/parse', {
+            const response = await fetch(`${API_URL}/pipelines/parse`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nodes, edges }),
