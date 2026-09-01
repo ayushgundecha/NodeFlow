@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "NodeFlow",
+  "project_id": "d913ea94-87c8-4f76-a1ef-485036f97b39"
+}
