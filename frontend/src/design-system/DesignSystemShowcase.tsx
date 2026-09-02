@@ -35,7 +35,7 @@ function StatusBadge({ icon: StatusIcon, label, status }: (typeof statuses)[numb
   );
 }
 
-function SampleNode({ failed = false, selected = false }: { failed?: boolean; selected?: boolean }) {
+function SampleNode({ baseline, failed = false, selected = false }: { baseline: string; failed?: boolean; selected?: boolean }) {
   const nodeStatus = failed
     ? { icon: XCircle, label: 'Failed', status: 'failed' as const }
     : selected
@@ -43,7 +43,7 @@ function SampleNode({ failed = false, selected = false }: { failed?: boolean; se
       : { icon: Clock3, label: 'Queued', status: 'queued' as const };
 
   return (
-    <article className={`nf-node${selected ? ' nf-node--selected' : ''}${failed ? ' nf-node--failed' : ''}`}>
+    <article className={`nf-node${selected ? ' nf-node--selected' : ''}${failed ? ' nf-node--failed' : ''}`} data-visual-baseline={baseline}>
       <div className="nf-node__rail" aria-hidden="true" />
       <div className="nf-node__content">
         <header className="nf-node__header">
@@ -138,9 +138,9 @@ export function DesignSystemShowcase() {
           <p>Compact enough for real graphs, detailed enough to debug without guessing.</p>
         </div>
         <div className="nf-node-grid">
-          <div><span className="nf-example-label">Default</span><SampleNode /></div>
-          <div><span className="nf-example-label">Selected + running</span><SampleNode selected /></div>
-          <div><span className="nf-example-label">Failed</span><SampleNode failed /></div>
+          <div><span className="nf-example-label">Configured</span><SampleNode baseline="configured" /></div>
+          <div><span className="nf-example-label">Running</span><SampleNode baseline="running" selected /></div>
+          <div><span className="nf-example-label">Failed</span><SampleNode baseline="failure" failed /></div>
         </div>
       </section>
 
@@ -150,6 +150,7 @@ export function DesignSystemShowcase() {
           <p>Errors explain what happened and what the user can do next.</p>
         </div>
         <div className="nf-feedback-grid">
+          <div className="nf-baseline-empty" data-visual-baseline="empty"><span>Empty</span><strong>No nodes yet</strong><small>Add a node or choose a template to start.</small></div>
           <div className="nf-alert nf-alert--success" role="status">
             <CheckCircle2 aria-hidden="true" size={18} />
             <div><strong>Workflow validated</strong><span>6 nodes and 7 connections are ready to run.</span></div>
@@ -159,6 +160,8 @@ export function DesignSystemShowcase() {
             <div><strong>JavaScript node stopped</strong><span>Line 18 returned an undefined incident. Open the node to fix the output mapping.</span></div>
             <button type="button">Open node</button>
           </div>
+          <label className="nf-field nf-field--error" data-visual-baseline="validation-error"><span>Public URL</span><span className="nf-input-wrap"><input aria-describedby="baseline-url-error" aria-invalid="true" value="http://internal" readOnly /></span><small id="baseline-url-error">Use a public HTTPS URL, beginning with https://.</small></label>
+          <div className="nf-baseline-terminal"><span data-visual-baseline="success"><StatusBadge {...statuses[2]!} /></span><span data-visual-baseline="skipped"><StatusBadge {...statuses[5]!} /></span></div>
         </div>
       </section>
       </main>
