@@ -4,3 +4,24 @@
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Frontend dependencies and generated output
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+backend/public/
+
+# Local environment and tool output
+.DS_Store
+.env
+.env.*
+!.env.example
+coverage/
+coverage.xml

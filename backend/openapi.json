@@ -1,0 +1,1703 @@
+{
+  "components": {
+    "schemas": {
+      "ConditionConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "rule": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Rule",
+            "type": "object"
+          }
+        },
+        "title": "ConditionConfig",
+        "type": "object"
+      },
+      "ConditionNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/ConditionConfig"
+          },
+          "id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "type": {
+            "const": "condition",
+            "default": "condition",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position"
+        ],
+        "title": "ConditionNode",
+        "type": "object"
+      },
+      "DelayConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "milliseconds": {
+            "default": 0,
+            "maximum": 3000,
+            "minimum": 0,
+            "title": "Milliseconds",
+            "type": "integer"
+          }
+        },
+        "title": "DelayConfig",
+        "type": "object"
+      },
+      "DelayNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/DelayConfig"
+          },
+          "id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "type": {
+            "const": "delay",
+            "default": "delay",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position"
+        ],
+        "title": "DelayNode",
+        "type": "object"
+      },
+      "Edge": {
+        "properties": {
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "target"
+        ],
+        "title": "Edge",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "environment": {
+            "title": "Environment",
+            "type": "string"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "status": {
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "service",
+          "version",
+          "environment"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "HttpRequestConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/JsonValue",
+            "default": null
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Headers",
+            "type": "object"
+          },
+          "method": {
+            "default": "GET",
+            "enum": [
+              "GET",
+              "POST"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "url": {
+            "default": "",
+            "maxLength": 2048,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "title": "HttpRequestConfig",
+        "type": "object"
+      },
+      "HttpRequestNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/HttpRequestConfig"
+          },
+          "id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "type": {
+            "const": "httpRequest",
+            "default": "httpRequest",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position"
+        ],
+        "title": "HttpRequestNode",
+        "type": "object"
+      },
+      "JavaScriptConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "default": "return input;",
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "title": "JavaScriptConfig",
+        "type": "object"
+      },
+      "JavaScriptNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/JavaScriptConfig"
+          },
+          "id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "type": {
+            "const": "javascript",
+            "default": "javascript",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position"
+        ],
+        "title": "JavaScriptNode",
+        "type": "object"
+      },
+      "JsonValue": {},
+      "LlmConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "promptTemplate": {
+            "default": "",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Prompttemplate",
+            "type": "string"
+          },
+          "systemPrompt": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Systemprompt",
+            "type": "string"
+          }
+        },
+        "title": "LlmConfig",
+        "type": "object"
+      },
+      "LlmNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/LlmConfig"
+          },
+          "id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "type": {
+            "const": "llm",
+            "default": "llm",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position"
+        ],
+        "title": "LlmNode",
+        "type": "object"
+      },
+      "ManualInputConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "defaultValue": {
+            "$ref": "#/components/schemas/JsonValue",
+            "default": null
+          },
+          "inputKey": {
+            "default": "payload",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Inputkey",
+            "type": "string"
+          }
+        },
+        "title": "ManualInputConfig",
+        "type": "object"
+      },
+      "ManualInputNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/ManualInputConfig"
+          },
+          "id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "type": {
+            "const": "manualInput",
+            "default": "manualInput",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position"
+        ],
+        "title": "ManualInputNode",
+        "type": "object"
+      },
+      "MergeConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "strategy": {
+            "default": "object",
+            "enum": [
+              "object",
+              "array"
+            ],
+            "title": "Strategy",
+            "type": "string"
+          }
+        },
+        "title": "MergeConfig",
+        "type": "object"
+      },
+      "MergeNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/MergeConfig"
+          },
+          "id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "type": {
+            "const": "merge",
+            "default": "merge",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position"
+        ],
+        "title": "MergeNode",
+        "type": "object"
+      },
+      "Node": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "Node",
+        "type": "object"
+      },
+      "NodeCompletedEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "durationMs": {
+            "minimum": 0,
+            "title": "Durationms",
+            "type": "integer"
+          },
+          "nodeId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "output": {
+            "$ref": "#/components/schemas/JsonValue",
+            "default": null
+          },
+          "runId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Runid",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "const": "node.completed",
+            "default": "node.completed",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "sequence",
+          "occurredAt",
+          "nodeId",
+          "durationMs"
+        ],
+        "title": "NodeCompletedEvent",
+        "type": "object"
+      },
+      "NodeFailedEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "durationMs": {
+            "minimum": 0,
+            "title": "Durationms",
+            "type": "integer"
+          },
+          "error": {
+            "$ref": "#/components/schemas/RunError"
+          },
+          "nodeId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "runId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Runid",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "const": "node.failed",
+            "default": "node.failed",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "sequence",
+          "occurredAt",
+          "nodeId",
+          "error",
+          "durationMs"
+        ],
+        "title": "NodeFailedEvent",
+        "type": "object"
+      },
+      "NodeLogEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "maxLength": 32768,
+            "title": "Message",
+            "type": "string"
+          },
+          "nodeId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "runId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Runid",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "stream": {
+            "default": "system",
+            "enum": [
+              "stdout",
+              "stderr",
+              "system"
+            ],
+            "title": "Stream",
+            "type": "string"
+          },
+          "truncated": {
+            "default": false,
+            "title": "Truncated",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "node.log",
+            "default": "node.log",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "sequence",
+          "occurredAt",
+          "nodeId",
+          "message"
+        ],
+        "title": "NodeLogEvent",
+        "type": "object"
+      },
+      "NodeQueuedEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "nodeId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "runId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Runid",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "const": "node.queued",
+            "default": "node.queued",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "sequence",
+          "occurredAt",
+          "nodeId"
+        ],
+        "title": "NodeQueuedEvent",
+        "type": "object"
+      },
+      "NodeSkippedEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "nodeId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "runId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Runid",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "const": "node.skipped",
+            "default": "node.skipped",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "sequence",
+          "occurredAt",
+          "nodeId",
+          "reason"
+        ],
+        "title": "NodeSkippedEvent",
+        "type": "object"
+      },
+      "NodeStartedEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "input": {
+            "$ref": "#/components/schemas/JsonValue",
+            "default": null
+          },
+          "nodeId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "runId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Runid",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "const": "node.started",
+            "default": "node.started",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "sequence",
+          "occurredAt",
+          "nodeId"
+        ],
+        "title": "NodeStartedEvent",
+        "type": "object"
+      },
+      "OutputConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "default": "json",
+            "enum": [
+              "json",
+              "text"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "label": {
+            "default": "Result",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "title": "OutputConfig",
+        "type": "object"
+      },
+      "OutputNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/OutputConfig"
+          },
+          "id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "type": {
+            "const": "output",
+            "default": "output",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position"
+        ],
+        "title": "OutputNode",
+        "type": "object"
+      },
+      "Pipeline": {
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/Edge"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/Node"
+            },
+            "title": "Nodes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "title": "Pipeline",
+        "type": "object"
+      },
+      "PipelineAnalysis": {
+        "properties": {
+          "is_dag": {
+            "title": "Is Dag",
+            "type": "boolean"
+          },
+          "num_edges": {
+            "title": "Num Edges",
+            "type": "integer"
+          },
+          "num_nodes": {
+            "title": "Num Nodes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "num_nodes",
+          "num_edges",
+          "is_dag"
+        ],
+        "title": "PipelineAnalysis",
+        "type": "object"
+      },
+      "PortDataType": {
+        "enum": [
+          "any",
+          "json",
+          "string",
+          "number",
+          "boolean"
+        ],
+        "title": "PortDataType",
+        "type": "string"
+      },
+      "PortDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "dataType": {
+            "$ref": "#/components/schemas/PortDataType"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/PortDirection"
+          },
+          "id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "multiple": {
+            "default": false,
+            "title": "Multiple",
+            "type": "boolean"
+          },
+          "required": {
+            "default": true,
+            "title": "Required",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "direction",
+          "dataType"
+        ],
+        "title": "PortDefinition",
+        "type": "object"
+      },
+      "PortDirection": {
+        "enum": [
+          "input",
+          "output"
+        ],
+        "title": "PortDirection",
+        "type": "string"
+      },
+      "Position": {
+        "additionalProperties": false,
+        "properties": {
+          "x": {
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "title": "Y",
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "title": "Position",
+        "type": "object"
+      },
+      "RunCompletedEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "durationMs": {
+            "minimum": 0,
+            "title": "Durationms",
+            "type": "integer"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "outputs": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Outputs",
+            "type": "object"
+          },
+          "runId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Runid",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "const": "run.completed",
+            "default": "run.completed",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "sequence",
+          "occurredAt",
+          "durationMs"
+        ],
+        "title": "RunCompletedEvent",
+        "type": "object"
+      },
+      "RunError": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "retryable": {
+            "default": false,
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "RunError",
+        "type": "object"
+      },
+      "RunFailedEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "durationMs": {
+            "minimum": 0,
+            "title": "Durationms",
+            "type": "integer"
+          },
+          "error": {
+            "$ref": "#/components/schemas/RunError"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "runId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Runid",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "const": "run.failed",
+            "default": "run.failed",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "sequence",
+          "occurredAt",
+          "error",
+          "durationMs"
+        ],
+        "title": "RunFailedEvent",
+        "type": "object"
+      },
+      "RunRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "clientRunId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Clientrunid",
+            "type": "string"
+          },
+          "input": {
+            "$ref": "#/components/schemas/JsonValue",
+            "default": null
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/WorkflowDefinition"
+          }
+        },
+        "required": [
+          "workflow",
+          "clientRunId"
+        ],
+        "title": "RunRequest",
+        "type": "object"
+      },
+      "RunStartedEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "clientRunId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Clientrunid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "runId": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Runid",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "const": "run.started",
+            "default": "run.started",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "sequence",
+          "occurredAt",
+          "clientRunId"
+        ],
+        "title": "RunStartedEvent",
+        "type": "object"
+      },
+      "TemplateConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "template": {
+            "default": "",
+            "maxLength": 10000,
+            "title": "Template",
+            "type": "string"
+          }
+        },
+        "title": "TemplateConfig",
+        "type": "object"
+      },
+      "TemplateNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/TemplateConfig"
+          },
+          "id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "type": {
+            "const": "template",
+            "default": "template",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position"
+        ],
+        "title": "TemplateNode",
+        "type": "object"
+      },
+      "TransformConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "expression": {
+            "default": "@",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Expression",
+            "type": "string"
+          }
+        },
+        "title": "TransformConfig",
+        "type": "object"
+      },
+      "TransformNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/TransformConfig"
+          },
+          "id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "type": {
+            "const": "transform",
+            "default": "transform",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position"
+        ],
+        "title": "TransformNode",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "ValidationIssue": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "edgeId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Edgeid"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Field"
+          },
+          "message": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "nodeId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Nodeid"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/ValidationSeverity"
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "message"
+        ],
+        "title": "ValidationIssue",
+        "type": "object"
+      },
+      "ValidationResult": {
+        "additionalProperties": false,
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "executionOrder": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Executionorder",
+            "type": "array"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "valid"
+        ],
+        "title": "ValidationResult",
+        "type": "object"
+      },
+      "ValidationSeverity": {
+        "enum": [
+          "error",
+          "warning"
+        ],
+        "title": "ValidationSeverity",
+        "type": "string"
+      },
+      "Viewport": {
+        "additionalProperties": false,
+        "properties": {
+          "x": {
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "title": "Y",
+            "type": "number"
+          },
+          "zoom": {
+            "default": 1.0,
+            "exclusiveMinimum": 0,
+            "maximum": 4,
+            "title": "Zoom",
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "title": "Viewport",
+        "type": "object"
+      },
+      "WorkflowDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowEdge"
+            },
+            "maxItems": 40,
+            "title": "Edges",
+            "type": "array"
+          },
+          "id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "nodes": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "condition": "#/components/schemas/ConditionNode",
+                  "delay": "#/components/schemas/DelayNode",
+                  "httpRequest": "#/components/schemas/HttpRequestNode",
+                  "javascript": "#/components/schemas/JavaScriptNode",
+                  "llm": "#/components/schemas/LlmNode",
+                  "manualInput": "#/components/schemas/ManualInputNode",
+                  "merge": "#/components/schemas/MergeNode",
+                  "output": "#/components/schemas/OutputNode",
+                  "template": "#/components/schemas/TemplateNode",
+                  "transform": "#/components/schemas/TransformNode"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ManualInputNode"
+                },
+                {
+                  "$ref": "#/components/schemas/TemplateNode"
+                },
+                {
+                  "$ref": "#/components/schemas/HttpRequestNode"
+                },
+                {
+                  "$ref": "#/components/schemas/TransformNode"
+                },
+                {
+                  "$ref": "#/components/schemas/ConditionNode"
+                },
+                {
+                  "$ref": "#/components/schemas/MergeNode"
+                },
+                {
+                  "$ref": "#/components/schemas/JavaScriptNode"
+                },
+                {
+                  "$ref": "#/components/schemas/DelayNode"
+                },
+                {
+                  "$ref": "#/components/schemas/LlmNode"
+                },
+                {
+                  "$ref": "#/components/schemas/OutputNode"
+                }
+              ]
+            },
+            "maxItems": 25,
+            "title": "Nodes",
+            "type": "array"
+          },
+          "schemaVersion": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schemaversion",
+            "type": "string"
+          },
+          "viewport": {
+            "$ref": "#/components/schemas/Viewport"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "WorkflowDefinition",
+        "type": "object"
+      },
+      "WorkflowEdge": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "source": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Source",
+            "type": "string"
+          },
+          "sourceHandle": {
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Sourcehandle",
+            "type": "string"
+          },
+          "target": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Target",
+            "type": "string"
+          },
+          "targetHandle": {
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Targethandle",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "sourceHandle",
+          "target",
+          "targetHandle"
+        ],
+        "title": "WorkflowEdge",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Build visually. Execute for real. Debug every step.",
+    "title": "NodeFlow API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/pipelines/parse": {
+      "post": {
+        "operationId": "parse_pipeline_api_v1_pipelines_parse_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pipeline"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineAnalysis"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Parse Pipeline",
+        "tags": [
+          "pipelines"
+        ]
+      }
+    }
+  }
+}
