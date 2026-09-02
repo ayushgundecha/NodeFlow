@@ -1,15 +1,10 @@
-import { PipelineToolbar } from './toolbar';
-import { PipelineUI } from './ui';
-import { SubmitButton } from './submit';
+import { DesignSystemShowcase } from './design-system/DesignSystemShowcase';
+import { WorkspaceShell } from './features/shell/WorkspaceShell';
 
 function App() {
-  return (
-    <div>
-      <PipelineToolbar />
-      <PipelineUI />
-      <SubmitButton />
-    </div>
-  );
+  return new URLSearchParams(window.location.search).has('showcase')
+    ? <DesignSystemShowcase />
+    : <WorkspaceShell />;
 }
 
 export default App;
