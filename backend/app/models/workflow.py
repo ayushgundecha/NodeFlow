@@ -81,7 +81,7 @@ class JavaScriptConfig(ContractModel):
 
 
 class DelayConfig(ContractModel):
-    milliseconds: int = Field(default=0, ge=0, le=3_000)
+    milliseconds: int = Field(default=0, ge=0, le=30_000)
 
 
 class LlmConfig(ContractModel):
@@ -177,8 +177,10 @@ class WorkflowDefinition(ContractModel):
     schema_version: Literal["1.0"] = SCHEMA_VERSION
     id: str = Field(min_length=1, max_length=120)
     name: str = Field(min_length=1, max_length=120)
-    nodes: list[WorkflowNode] = Field(default_factory=list, max_length=25)
-    edges: list[WorkflowEdge] = Field(default_factory=list, max_length=40)
+    # Public-demo limits are enforced by the workflow planner so callers receive
+    # canvas-addressable ValidationIssues instead of a generic HTTP 422 response.
+    nodes: list[WorkflowNode] = Field(default_factory=list)
+    edges: list[WorkflowEdge] = Field(default_factory=list)
     viewport: Viewport = Field(default_factory=lambda: Viewport(x=0, y=0, zoom=1))
 
     @field_validator("schema_version", mode="before")

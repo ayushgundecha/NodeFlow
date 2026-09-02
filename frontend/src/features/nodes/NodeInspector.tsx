@@ -6,10 +6,12 @@ import { useStore } from "../../store";
 import { useEditorStore } from "../editor/editorStore";
 import { formatFieldValue, validateField } from "./fieldValidation";
 import { nodeCategoryLabels, nodeIcons } from "./nodePresentation";
+import type { ValidationIssue } from "../../contracts/types";
 
 interface NodeInspectorProps {
   collapsed: boolean;
   onToggle: () => void;
+  validationIssues?: ValidationIssue[];
 }
 
 interface InspectorFieldProps {
@@ -76,7 +78,7 @@ function InspectorField({ field, initialValue, onCommit }: InspectorFieldProps) 
   );
 }
 
-export function NodeInspector({ collapsed, onToggle }: NodeInspectorProps) {
+export function NodeInspector({ collapsed, onToggle, validationIssues = [] }: NodeInspectorProps) {
   const selectedNodeId = useEditorStore((state) => state.selectedNodeId);
   const node = useStore((state) => state.nodes.find((candidate) => candidate.id === selectedNodeId));
   const updateNodeField = useStore((state) => state.updateNodeField);
@@ -103,6 +105,7 @@ export function NodeInspector({ collapsed, onToggle }: NodeInspectorProps) {
       <div className="nf-inspector-tabs" role="tablist" aria-label="Inspector views"><button aria-selected="true" role="tab" type="button">Configure</button><button aria-selected="false" disabled role="tab" type="button">Input</button><button aria-selected="false" disabled role="tab" type="button">Output</button></div>
       <div className="nf-inspector-content">
         <div className="nf-selected-node"><span className={`nf-node-tone--${definition.category}`}><Icon aria-hidden="true" size={18} /></span><div><small>{nodeCategoryLabels[definition.category]}</small><strong>{node.data.label ?? definition.label}</strong></div></div>
+        {validationIssues.filter((issue) => issue.nodeId === node.id).map((issue) => <div className="nf-inspector-runtime-error" key={`${issue.code}.${issue.field}`} role="alert"><strong>{issue.code.replaceAll("_", " ")}</strong><span>{issue.message}</span></div>)}
         <label className="nf-shell-field"><span>Node name<em aria-hidden="true">Required</em></span><input aria-label="Node name" onChange={(event) => updateNodeField(node.id, "label", event.target.value)} required type="text" value={node.data.label ?? ""} /><small>Shown on the canvas and in run traces.</small></label>
         {definition.fields.map((field) => (
           <InspectorField field={field} initialValue={node.data.config?.[field.key]} key={`${node.id}.${field.key}`} onCommit={(value) => updateNodeConfig(node.id, field.key, value)} />

@@ -2,6 +2,7 @@ import { CheckCircle2, Circle, CircleDot, LoaderCircle, XCircle } from "lucide-r
 import type { PortDefinition } from "../../contracts/types";
 import { getNodeDefinition } from "../../domain/nodes/registry";
 import type { FlowNode } from "../../types/editor";
+import type { RuntimeNodeStatus } from "../runtime/useWorkflowRuntime";
 import { nodeCategoryLabels, nodeIcons } from "./nodePresentation";
 
 export type ActivePort = { dataType: PortDefinition["dataType"]; direction: PortDefinition["direction"]; nodeId: string; portId: string } | null;
@@ -39,12 +40,14 @@ interface CompactNodeCardProps {
   onPortChange: (port: ActivePort) => void;
   onSelect: (nodeId: string, additive: boolean) => void;
   selected: boolean;
+  status?: RuntimeNodeStatus;
+  validationMessage?: string;
 }
 
-export function CompactNodeCard({ activePort, node, onPortChange, onSelect, selected }: CompactNodeCardProps) {
+export function CompactNodeCard({ activePort, node, onPortChange, onSelect, selected, status: runtimeStatus, validationMessage }: CompactNodeCardProps) {
   const definition = getNodeDefinition(node.data.nodeType as Parameters<typeof getNodeDefinition>[0]);
   const Icon = nodeIcons[definition.icon];
-  const status = node.data.status ?? "idle";
+  const status = runtimeStatus ?? node.data.status ?? "idle";
   const StatusIcon = statusIcons[status];
   const inputs = definition.ports.filter((port) => port.direction === "input");
   const outputs = definition.ports.filter((port) => port.direction === "output");
@@ -65,7 +68,7 @@ export function CompactNodeCard({ activePort, node, onPortChange, onSelect, sele
   };
 
   return (
-    <article className={`nf-registry-node nf-registry-node--${status}${selected ? " nf-registry-node--selected" : ""}`}>
+    <article aria-describedby={validationMessage ? `${node.id}-validation` : undefined} className={`nf-registry-node nf-registry-node--${status}${selected ? " nf-registry-node--selected" : ""}${validationMessage ? " nf-registry-node--invalid" : ""}`}>
       <button aria-label={`Select ${node.data.label ?? definition.label} node`} className="nf-registry-node__select" onClick={(event) => onSelect(node.id, event.shiftKey)} type="button">
         <span className={`nf-registry-node__icon nf-node-tone--${definition.category}`}><Icon aria-hidden="true" size={17} /></span>
         <span><small>{nodeCategoryLabels[definition.category]}</small><strong>{node.data.label ?? definition.label}</strong></span>
@@ -75,6 +78,7 @@ export function CompactNodeCard({ activePort, node, onPortChange, onSelect, sele
         <div>{inputs.map(renderPort)}</div>
         <div>{outputs.map(renderPort)}</div>
       </div>
+      {validationMessage ? <p className="nf-node-validation" id={`${node.id}-validation`}><XCircle aria-hidden="true" size={12} />{validationMessage}</p> : null}
     </article>
   );
 }

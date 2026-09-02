@@ -5,6 +5,7 @@ export type WorkflowNode = NonNullable<WorkflowDefinition["nodes"]>[number];
 export type WorkflowEdge = components["schemas"]["WorkflowEdge"];
 export type PortDefinition = components["schemas"]["PortDefinition"];
 export type ValidationResult = components["schemas"]["ValidationResult"];
+export type ValidationIssue = components["schemas"]["ValidationIssue"];
 export type RunRequest = components["schemas"]["RunRequest"];
 
 export type RunEvent =

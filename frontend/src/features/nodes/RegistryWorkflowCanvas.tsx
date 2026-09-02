@@ -2,6 +2,8 @@ import { Circle, Maximize2, PanelLeftOpen, PanelRightOpen, ZoomIn, ZoomOut } fro
 import { useRef, useState } from "react";
 import { useStore } from "../../store";
 import { useEditorStore } from "../editor/editorStore";
+import type { RuntimeNodeStatus } from "../runtime/useWorkflowRuntime";
+import type { ValidationIssue } from "../../contracts/types";
 import { CompactNodeCard, type ActivePort } from "./CompactNodeCard";
 import { EditorCommandBar } from "./EditorCommandBar";
 
@@ -12,13 +14,15 @@ interface RegistryWorkflowCanvasProps {
   onShowInspector: () => void;
   onShowLibrary: () => void;
   workflowName: string;
+  nodeStatuses: Record<string, RuntimeNodeStatus>;
+  validationIssues: ValidationIssue[];
 }
 
 function CanvasIconButton({ icon: Icon, label, onClick }: { icon: typeof Maximize2; label: string; onClick?: () => void }) {
   return <button aria-label={label} className="nf-icon-button" onClick={onClick} title={label} type="button"><Icon aria-hidden="true" size={17} /></button>;
 }
 
-export function RegistryWorkflowCanvas({ description, inspectorCollapsed, libraryCollapsed, onShowInspector, onShowLibrary, workflowName }: RegistryWorkflowCanvasProps) {
+export function RegistryWorkflowCanvas({ description, inspectorCollapsed, libraryCollapsed, nodeStatuses, onShowInspector, onShowLibrary, validationIssues, workflowName }: RegistryWorkflowCanvasProps) {
   const nodes = useStore((state) => state.nodes);
   const edges = useStore((state) => state.edges);
   const onConnect = useStore((state) => state.onConnect);
@@ -43,6 +47,18 @@ export function RegistryWorkflowCanvas({ description, inspectorCollapsed, librar
     onConnect({ source: source.nodeId, sourceHandle: source.portId, target: target.nodeId, targetHandle: target.portId });
     setActivePort(null);
   };
+  const nodeErrors = new Map(validationIssues.filter((issue) => issue.nodeId).map((issue) => [issue.nodeId!, issue.message]));
+  const edgeStatus = (sourceId: string, targetId: string) => {
+    const source = nodeStatuses[sourceId] ?? "idle";
+    const target = nodeStatuses[targetId] ?? "idle";
+    if (source === "failed" || target === "failed") return "failed";
+    if (source === "skipped" || target === "skipped") return "skipped";
+    if (source === "paused" || target === "paused") return "paused";
+    if (source === "running" || target === "running") return "running";
+    if (source === "succeeded" && target === "succeeded") return "succeeded";
+    if (source === "queued" || target === "queued") return "queued";
+    return "idle";
+  };
 
   return (
     <section aria-labelledby="canvas-title" className="nf-workflow-canvas">
@@ -64,12 +80,13 @@ export function RegistryWorkflowCanvas({ description, inspectorCollapsed, librar
           <p>{description}</p>
         </div>
         <EditorCommandBar />
+        {validationIssues.length ? <div className="nf-validation-summary" id="validation-summary" role="alert" tabIndex={-1}><strong>Run blocked · {validationIssues.length} {validationIssues.length === 1 ? "issue" : "issues"}</strong><span>{validationIssues[0]!.message}</span></div> : null}
         {nodes.length ? (
           <div className="nf-registry-workflow" aria-label="Editable workflow nodes" style={{ transform: `scale(${zoom / 100})` }}>
             {nodes.map((node, index) => (
               <div className="nf-registry-workflow__step" key={node.id}>
-                <CompactNodeCard activePort={activePort} node={node} onPortChange={choosePort} onSelect={(nodeId, additive) => additive ? toggleNodeSelection(nodeId) : selectNode(nodeId)} selected={selectedNodeIds.includes(node.id)} />
-                {index < nodes.length - 1 ? <span aria-hidden="true" className="nf-registry-edge"><i /></span> : null}
+                <CompactNodeCard activePort={activePort} node={node} onPortChange={choosePort} onSelect={(nodeId, additive) => additive ? toggleNodeSelection(nodeId) : selectNode(nodeId)} selected={selectedNodeIds.includes(node.id)} status={nodeStatuses[node.id]} validationMessage={nodeErrors.get(node.id)} />
+                {index < nodes.length - 1 ? (() => { const next = nodes[index + 1]!; const connection = edges.find((edge) => edge.source === node.id && edge.target === next.id); const status = connection ? edgeStatus(connection.source, connection.target) : "idle"; return <span aria-label={`Connection ${node.data.label ?? node.id} to ${next.data.label ?? next.id}: ${status}`} className={`nf-registry-edge nf-registry-edge--${status}${validationIssues.some((issue) => issue.edgeId === connection?.id) ? " nf-registry-edge--invalid" : ""}`} role="img"><i aria-hidden="true" /></span>; })() : null}
               </div>
             ))}
           </div>
