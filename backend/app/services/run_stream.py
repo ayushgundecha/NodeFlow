@@ -119,13 +119,27 @@ def _transition_events(
         )
         return [started, log]
     if transition.state is NodeRunState.COMPLETED and record:
+        logs = (
+            [
+                NodeLogEvent(
+                    **sequence.fields(),
+                    node_id=node_id,
+                    stream="stdout",
+                    message=message,
+                    truncated=message.endswith("[output truncated]"),
+                )
+                for message in record.logs
+                if message
+            ]
+        )
         return [
+            *logs,
             NodeCompletedEvent(
                 **sequence.fields(),
                 node_id=node_id,
                 output=_node_output(transition),
                 duration_ms=record.duration_ms,
-            )
+            ),
         ]
     if transition.state is NodeRunState.FAILED and record:
         return [

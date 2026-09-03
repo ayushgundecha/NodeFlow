@@ -50,6 +50,7 @@ class NodeExecutionContext:
 class NodeExecutionResult:
     outputs: Mapping[str, JsonValue] = field(default_factory=dict)
     active_output_handles: frozenset[str] | None = None
+    logs: tuple[str, ...] = ()
 
     def is_output_active(self, handle: str) -> bool:
         return self.active_output_handles is None or handle in self.active_output_handles
@@ -67,6 +68,7 @@ class NodeRunRecord:
     state: NodeRunState
     inputs: Mapping[str, tuple[JsonValue, ...]] = field(default_factory=dict)
     outputs: Mapping[str, JsonValue] = field(default_factory=dict)
+    logs: tuple[str, ...] = ()
     duration_ms: int = 0
     error_code: str | None = None
     error: str | None = None
@@ -116,6 +118,7 @@ class _MutableNodeState:
             state=self.state,
             inputs=dict(self.inputs),
             outputs=dict(self.result.outputs) if self.result else {},
+            logs=self.result.logs if self.result else (),
             duration_ms=self.duration_ms,
             error_code=self.error_code,
             error=self.error,

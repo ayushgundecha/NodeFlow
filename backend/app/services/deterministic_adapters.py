@@ -284,7 +284,7 @@ class OutputAdapter:
 def deterministic_adapters() -> Mapping[str, NodeAdapter]:
     """Return the provider-free adapter registry used by the Phase 3 runtime."""
 
-    return {
+    adapters: dict[str, NodeAdapter] = {
         "manualInput": ManualInputAdapter(),
         "template": TemplateAdapter(),
         "transform": TransformAdapter(),
@@ -293,3 +293,9 @@ def deterministic_adapters() -> Mapping[str, NodeAdapter]:
         "delay": DelayAdapter(),
         "output": OutputAdapter(),
     }
+    # Import lazily to keep the deterministic adapters independently testable
+    # without giving them any ability to execute code on the API host.
+    from .sandbox_javascript import JavaScriptAdapter
+
+    adapters["javascript"] = JavaScriptAdapter()
+    return adapters
