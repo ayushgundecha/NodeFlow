@@ -35,4 +35,23 @@ describe("DebuggerPanel", () => {
     expect(screen.getByRole("table", { name: "Exact node timing data" })).toBeInTheDocument();
     expect(screen.getAllByText("20 ms").length).toBeGreaterThan(0);
   });
+
+  it("turns a completed run into a clear final-output action", () => {
+    const inspect = renderPanel();
+
+    fireEvent.click(screen.getByRole("button", { name: "View final output" }));
+
+    expect(inspect).toHaveBeenCalledWith("fetch");
+    expect(screen.getByText(/"ok": true/)).toBeInTheDocument();
+  });
+
+  it("labels a disconnected partial run as interrupted instead of running", () => {
+    const onRun = vi.fn();
+    render(<DebuggerPanel busy={false} collapsed={false} events={events.slice(0, 2)} historyAvailable nodeLabels={{ fetch: "Fetch customer" }} onClearHistory={vi.fn()} onInspectNode={vi.fn()} onReplayEvents={vi.fn()} onRun={onRun} onStop={vi.fn()} onToggle={vi.fn()} retryable statusMessage="Run disconnected before a terminal event. Retry is available." traces={[]} workflowFormat="nodeflow.workflow/2" workflowId="test" workflowSignature="signature" />);
+
+    expect(screen.getByText("Interrupted")).toBeVisible();
+    expect(screen.getByText("Run connection interrupted")).toBeVisible();
+    fireEvent.click(screen.getAllByRole("button", { name: "Retry run" })[0]!);
+    expect(onRun).toHaveBeenCalledOnce();
+  });
 });

@@ -1,4 +1,4 @@
-export const PANEL_LAYOUT_STORAGE_KEY = 'nodeflow.panel-layout.v1';
+export const PANEL_LAYOUT_STORAGE_KEY = 'nodeflow.panel-layout.v2';
 
 export interface PanelLayout {
   debuggerCollapsed: boolean;
@@ -10,9 +10,9 @@ export interface PanelLayout {
 }
 
 export const DEFAULT_PANEL_LAYOUT: PanelLayout = {
-  debuggerCollapsed: false,
+  debuggerCollapsed: true,
   debuggerHeight: 300,
-  inspectorCollapsed: false,
+  inspectorCollapsed: true,
   inspectorWidth: 320,
   libraryCollapsed: false,
   libraryWidth: 264,

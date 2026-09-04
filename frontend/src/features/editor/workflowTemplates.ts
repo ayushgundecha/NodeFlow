@@ -1,6 +1,7 @@
 import type { NodeType } from "../../contracts/types";
 import { getNodeDefinition } from "../../domain/nodes/registry";
 import type { FlowEdge, FlowNode } from "../../types/editor";
+import { layoutWorkflowNodes, workflowNodePosition } from "../nodes/workflowGraph";
 
 export type WorkflowTemplate = { description: string; edges: FlowEdge[]; id: string; name: string; nodes: FlowNode[]; outcome: string };
 type NodeSpec = { config?: Record<string, unknown>; label: string; type: NodeType };
@@ -11,20 +12,20 @@ const portId = (type: NodeType, direction: "input" | "output") => getNodeDefinit
 const buildTemplate = (id: string, name: string, description: string, outcome: string, specs: NodeSpec[], edgeSpecs: EdgeSpec[] = specs.slice(1).map((_, index) => ({ source: index, target: index + 1 }))): WorkflowTemplate => {
   const nodes: FlowNode[] = specs.map((spec, index) => {
     const nodeId = `${spec.type}-${index + 1}`;
-    return { id: nodeId, type: "registryNode", position: { x: 80 + index * 260, y: 220 }, data: { id: nodeId, nodeType: spec.type, label: spec.label, config: { ...getNodeDefinition(spec.type).createConfig(), ...spec.config }, status: "idle" } };
+    return { id: nodeId, type: "registryNode", position: workflowNodePosition(index), data: { id: nodeId, nodeType: spec.type, label: spec.label, config: { ...getNodeDefinition(spec.type).createConfig(), ...spec.config }, status: "idle" } };
   });
   const edges: FlowEdge[] = edgeSpecs.map((edge, index) => {
     const source = nodes[edge.source]!;
     const target = nodes[edge.target]!;
     return { id: `${id}-edge-${index + 1}`, source: source.id, sourceHandle: edge.sourceHandle ?? portId(source.data.nodeType as NodeType, "output"), target: target.id, targetHandle: edge.targetHandle ?? portId(target.data.nodeType as NodeType, "input") };
   });
-  return { id, name, description, outcome, nodes, edges };
+  return { id, name, description, outcome, nodes: layoutWorkflowNodes(nodes, edges), edges };
 };
 
 const incidentTriage = buildTemplate(
-  "incident-triage", "Alert Brief",
-  "Turn one sample service alert into a short, human-reviewable brief. Follow each step as it runs.",
-  "A concise alert brief with a visible severity decision and full execution trace.",
+  "incident-triage", "Incident Response Demo",
+  "See how a noisy checkout alert becomes a severity decision and an AI-written incident brief. Run the example, inspect every step, then make it your own.",
+  "A concise incident brief, visible severity decision, and complete execution trace.",
   [
     { type: "manualInput", label: "Incident input", config: { inputKey: "incident", defaultValue: { service: "checkout-api", errorRate: 0.18, latencyMs: 1420, region: "ap-south-1" } } },
     { type: "transform", label: "Validate payload", config: { expression: "@" } },

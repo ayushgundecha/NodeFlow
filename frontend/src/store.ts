@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import {
-  MarkerType,
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
 } from "reactflow";
 import type { FlowStore } from "./types/editor";
+import { layoutWorkflowNodes } from "./features/nodes/workflowGraph";
 
 const snapshot = (state: Pick<FlowStore, "nodes" | "edges">) => ({ nodes: state.nodes, edges: state.edges });
 const withHistory = (state: FlowStore, next: Partial<Pick<FlowStore, "nodes" | "edges">>) => ({
@@ -58,8 +58,7 @@ export const useStore = create<FlowStore>((set, get) => ({
         {
           ...connection,
           type: "smoothstep",
-          animated: true,
-          markerEnd: { type: MarkerType.Arrow, height: 20, width: 20 },
+          animated: false,
         },
         state.edges,
       ),
@@ -109,7 +108,7 @@ export const useStore = create<FlowStore>((set, get) => ({
     set((state) => withHistory(state, { nodes: state.nodes.map((node) => ids.has(node.id) ? { ...node, position: { x: node.position.x + delta.x, y: node.position.y + delta.y } } : node) }));
   },
   autoLayout: () => {
-    set((state) => withHistory(state, { nodes: state.nodes.map((node, index) => ({ ...node, position: { x: 80 + index * 260, y: 220 } })) }));
+    set((state) => withHistory(state, { nodes: layoutWorkflowNodes(state.nodes, state.edges) }));
   },
   undo: () => {
     set((state) => {

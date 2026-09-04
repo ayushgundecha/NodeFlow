@@ -41,6 +41,12 @@ const messageForState = (state: RunEventState, error: string | null, validating:
   return "Workflow is ready to validate and run.";
 };
 
+export const runtimeWorkflowRevision = (workspace: EditorWorkspace) => JSON.stringify({
+  edges: workspace.edges.map(({ source, sourceHandle, target, targetHandle }) => ({ source, sourceHandle, target, targetHandle })),
+  id: workspace.id,
+  nodes: workspace.nodes.map((node) => ({ config: node.data.config ?? {}, id: node.id, type: node.data.nodeType })),
+});
+
 export function useWorkflowRuntime(workspace: EditorWorkspace) {
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [runState, setRunState] = useState<RunEventState>(initialRunEventState);
@@ -49,19 +55,22 @@ export function useWorkflowRuntime(workspace: EditorWorkspace) {
   const [executing, setExecuting] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
   const workspaceRef = useRef(workspace);
+  const revision = useMemo(() => runtimeWorkflowRevision(workspace), [workspace]);
+  const revisionRef = useRef(revision);
   const busy = validating || executing;
 
   useEffect(() => () => controllerRef.current?.abort(), []);
   useEffect(() => {
-    if (workspaceRef.current === workspace) return;
     workspaceRef.current = workspace;
+    if (revisionRef.current === revision) return;
+    revisionRef.current = revision;
     controllerRef.current?.abort();
     controllerRef.current = null;
     setExecuting(false);
     setValidation(null);
     setRequestError(null);
     setRunState(initialRunEventState());
-  }, [workspace]);
+  }, [revision, workspace]);
 
   const run = useCallback(async () => {
     if (controllerRef.current || busy) return;
@@ -72,7 +81,7 @@ export function useWorkflowRuntime(workspace: EditorWorkspace) {
     setRunState(initialRunEventState());
     setValidating(true);
     setExecuting(true);
-    const workflow = editorWorkspaceToExecutionWorkflow(workspace);
+    const workflow = editorWorkspaceToExecutionWorkflow(workspaceRef.current);
     try {
       const validationResponse = await fetch("/api/v1/workflows/validate", {
         body: JSON.stringify(workflow),
@@ -82,6 +91,7 @@ export function useWorkflowRuntime(workspace: EditorWorkspace) {
       });
       if (!validationResponse.ok) throw new Error(`Validation failed with HTTP ${validationResponse.status}.`);
       const result = await validationResponse.json() as ValidationResult;
+      if (controller.signal.aborted || controllerRef.current !== controller) return;
       setValidation(result);
       setValidating(false);
       if (!result.valid) return;
@@ -94,17 +104,20 @@ export function useWorkflowRuntime(workspace: EditorWorkspace) {
         onEvent: (_event, next) => setRunState(next),
         signal: controller.signal,
       });
+      if (controller.signal.aborted || controllerRef.current !== controller) return;
       setRunState(terminal);
     } catch (error) {
-      if (!controller.signal.aborted) {
+      if (!controller.signal.aborted && controllerRef.current === controller) {
         setRequestError(error instanceof Error ? error.message : "The backend request failed.");
       }
     } finally {
-      setValidating(false);
-      setExecuting(false);
-      controllerRef.current = null;
+      if (controllerRef.current === controller) {
+        setValidating(false);
+        setExecuting(false);
+        controllerRef.current = null;
+      }
     }
-  }, [busy, workspace]);
+  }, [busy]);
 
   const stop = useCallback(() => {
     controllerRef.current?.abort();

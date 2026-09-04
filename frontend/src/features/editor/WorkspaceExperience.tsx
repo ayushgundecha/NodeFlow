@@ -4,7 +4,6 @@ import type { EditorWorkspace } from "./workspacePersistence";
 import { parseEditorWorkspace, serializeEditorWorkspace } from "./workspacePersistence";
 import { blankWorkflowTemplate, defaultWorkflowTemplate, workflowTemplates, type WorkflowTemplate } from "./workflowTemplates";
 
-const ONBOARDING_KEY = "nodeflow.onboarding.dismissed.v1";
 type Replacement = { kind: "template"; template: WorkflowTemplate } | { kind: "import"; workspace: EditorWorkspace } | { kind: "reset" } | { kind: "blank" };
 
 interface WorkspaceExperienceProps {
@@ -16,8 +15,6 @@ interface WorkspaceExperienceProps {
 }
 
 export function WorkspaceExperience({ currentWorkspace, onClose, onReplace, open, recoveryReason }: WorkspaceExperienceProps) {
-  const [welcomeVisible, setWelcomeVisible] = useState(() => typeof localStorage === "undefined" || localStorage.getItem(ONBOARDING_KEY) !== "true");
-  const [tourVisible, setTourVisible] = useState(false);
   const [pending, setPending] = useState<Replacement | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -48,7 +45,6 @@ export function WorkspaceExperience({ currentWorkspace, onClose, onReplace, open
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
   };
 
-  const dismissWelcome = () => { try { localStorage.setItem(ONBOARDING_KEY, "true"); } catch { /* Dismissal remains functional without storage. */ } setWelcomeVisible(false); setTourVisible(false); };
   const requestTemplate = (template: WorkflowTemplate) => { replacementOpener.current = document.activeElement as HTMLElement | null; setPending({ kind: "template", template }); };
   const confirmReplacement = () => {
     if (!pending) return;
@@ -66,12 +62,11 @@ export function WorkspaceExperience({ currentWorkspace, onClose, onReplace, open
   };
 
   return <>
-    {recoveryReason ? <div className="nf-recovery-notice" role="status"><CheckCircle2 aria-hidden="true" size={16} /><span><strong>Workspace recovered safely.</strong> The damaged local draft was backed up and the Alert Brief example was loaded. {recoveryReason}</span></div> : null}
-    {welcomeVisible ? <aside className="nf-welcome-card" aria-label="Welcome to NodeFlow"><button aria-label="Dismiss welcome" onClick={dismissWelcome} type="button"><X aria-hidden="true" size={16} /></button><span><Sparkles aria-hidden="true" size={18} /></span><div><small>Welcome to NodeFlow</small><strong>Build it. Run it. Understand every step.</strong><p>Start with a simple alert example, or make a blank canvas. Select any node to edit it in the inspector.</p><div><button className="nf-button nf-button--secondary" onClick={() => { replacementOpener.current = document.activeElement as HTMLElement | null; setPending({ kind: "blank" }); }} type="button">Start blank</button><button className="nf-text-link" onClick={() => setTourVisible((visible) => !visible)} type="button">{tourVisible ? "Hide guide" : "How it works"}</button></div>{tourVisible ? <ol><li><b>1</b><span><strong>Add</strong>Drag a node from the library, or click it to add one.</span></li><li><b>2</b><span><strong>Connect</strong>Drag from an output port to a matching input. You can also click two ports.</span></li><li><b>3</b><span><strong>Run</strong>Use the primary Run action to inspect real execution.</span></li></ol> : null}</div></aside> : null}
+    {recoveryReason ? <div className="nf-recovery-notice" role="status"><CheckCircle2 aria-hidden="true" size={16} /><span><strong>Workspace recovered safely.</strong> The damaged local draft was backed up and the Incident Response example was loaded. {recoveryReason}</span></div> : null}
     {open ? <div className="nf-workspace-dialog" role="dialog" aria-modal="true" aria-labelledby="workspace-dialog-title" onKeyDown={trapFocus}><div><header><div><LayoutTemplate aria-hidden="true" size={18} /><span><small>Workspace</small><strong id="workspace-dialog-title">Templates and local data</strong></span></div><button aria-label="Close workspace menu" onClick={onClose} ref={closeButton} type="button"><X aria-hidden="true" size={17} /></button></header>
       <section><span className="nf-overline">Start simple</span><div className="nf-template-grid"><article className="nf-template-card--starter"><Sparkles aria-hidden="true" size={18} /><div><strong>Blank canvas</strong><p>Build your own flow one node at a time. You can drag nodes or click to add them.</p><small>No nodes · Start from scratch</small></div><button aria-label="Start a blank workflow" onClick={() => { replacementOpener.current = document.activeElement as HTMLElement | null; setPending({ kind: "blank" }); }} type="button">Start blank</button></article>{workflowTemplates.map((template) => <article key={template.id}><FileJson2 aria-hidden="true" size={18} /><div><strong>{template.name}</strong><p>{template.description}</p><small>{template.nodes.length} nodes · {template.outcome}</small></div><button aria-label={`Use ${template.name} template`} onClick={() => requestTemplate(template)} type="button">Use example</button></article>)}</div></section>
       <section className="nf-data-actions"><span className="nf-overline">Your browser-local workspace</span><p>Export a portable, versioned JSON file or import one after validation. Nothing is uploaded.</p><div><button onClick={exportWorkflow} type="button"><Download aria-hidden="true" size={15} />Export workflow</button><button onClick={() => fileInput.current?.click()} type="button"><Upload aria-hidden="true" size={15} />Import workflow</button><button className="nf-danger-action" onClick={() => { replacementOpener.current = document.activeElement as HTMLElement | null; setPending({ kind: "reset" }); }} type="button"><RotateCcw aria-hidden="true" size={15} />Reset sample</button><input accept="application/json,.json" aria-label="Choose workflow JSON file" className="nf-visually-hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importWorkflow(file); event.target.value = ""; }} ref={fileInput} tabIndex={-1} type="file" /></div>{importError ? <div className="nf-import-error" role="alert"><strong>Import blocked</strong><span>{importError}</span></div> : null}</section>
     </div></div> : null}
-    {pending ? <div className="nf-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="replace-title" onKeyDown={trapFocus}><div><strong id="replace-title">Replace the current workflow?</strong><p>Your current draft will be replaced by {pending.kind === "template" ? pending.template.name : pending.kind === "import" ? pending.workspace.name : pending.kind === "blank" ? "a blank canvas" : "a fresh Alert Brief example"}. Export it first if you want a backup.</p><div><button onClick={() => setPending(null)} ref={cancelButton} type="button">Cancel</button><button className="nf-button nf-button--primary" onClick={confirmReplacement} type="button">Replace workflow</button></div></div></div> : null}
+    {pending ? <div className="nf-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="replace-title" onKeyDown={trapFocus}><div><strong id="replace-title">Replace the current workflow?</strong><p>Your current draft will be replaced by {pending.kind === "template" ? pending.template.name : pending.kind === "import" ? pending.workspace.name : pending.kind === "blank" ? "a blank canvas" : "a fresh Incident Response example"}. Export it first if you want a backup.</p><div><button onClick={() => setPending(null)} ref={cancelButton} type="button">Cancel</button><button className="nf-button nf-button--primary" onClick={confirmReplacement} type="button">Replace workflow</button></div></div></div> : null}
   </>;
 }

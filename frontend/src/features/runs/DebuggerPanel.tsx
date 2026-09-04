@@ -102,6 +102,8 @@ export function DebuggerPanel({ busy, collapsed, events: liveEvents, historyAvai
   const selectedNodeId = selectedEvent ? eventNodeId(selectedEvent) : null;
   const details = detailsForNode(events, selectedNodeId);
   const summary = summarizeRun(events);
+  const finalNodeEvent = [...events].reverse().find((event) => event.type === "node.completed");
+  const failedNodeEvent = [...events].reverse().find((event) => event.type === "node.failed");
   const timings = runTimings(events);
   const maxEnd = Math.max(1, ...timings.map((timing) => timing.offsetMs + timing.durationMs));
   const comparableTraces = traces.filter((trace) => trace.schema === "nodeflow.run-history/1" && trace.workflowFormat === workflowFormat && trace.workflowId === workflowId);
@@ -138,11 +140,12 @@ export function DebuggerPanel({ busy, collapsed, events: liveEvents, historyAvai
   };
 
   const hasEvents = events.length > 0;
+  const interrupted = !busy && retryable && summary.status === "running";
   const selectedLabel = selectedNodeId ? nodeLabels[selectedNodeId] ?? selectedNodeId : "Workflow";
   return (
     <section aria-labelledby="debugger-title" className="nf-debugger" hidden={collapsed}>
       <header className="nf-debugger__header">
-        <div><TerminalSquare aria-hidden="true" size={17} /><h2 id="debugger-title">Run debugger</h2><span className={`nf-shell-badge nf-shell-badge--${summary.status}`}>{busy ? <LoaderCircle aria-hidden="true" size={12} /> : summary.status === "completed" ? <CheckCircle2 aria-hidden="true" size={12} /> : summary.status === "failed" ? <AlertCircle aria-hidden="true" size={12} /> : <Clock3 aria-hidden="true" size={12} />}{busy ? "Running live" : hasEvents ? summary.status : "Ready"}</span></div>
+        <div><TerminalSquare aria-hidden="true" size={17} /><h2 id="debugger-title">Run debugger</h2><span className={`nf-shell-badge nf-shell-badge--${interrupted ? "failed" : summary.status}`}>{busy ? <LoaderCircle aria-hidden="true" size={12} /> : interrupted || summary.status === "failed" ? <AlertCircle aria-hidden="true" size={12} /> : summary.status === "completed" ? <CheckCircle2 aria-hidden="true" size={12} /> : <Clock3 aria-hidden="true" size={12} />}{busy ? "Running live" : interrupted ? "Interrupted" : hasEvents ? summary.status : "Ready"}</span></div>
         <div role="tablist" aria-label="Debugger views">
           {(["timeline", "data", "timing", "history"] as const).map((item) => <button aria-controls={`debugger-${item}`} aria-selected={view === item} className={`nf-debug-tab${view === item ? " nf-debug-tab--active" : ""}`} id={`debugger-tab-${item}`} key={item} onClick={() => setView(item)} role="tab" type="button">{item === "data" ? "Node data" : item === "history" ? "Runs" : item === "timing" ? "Timing" : "Timeline"}</button>)}
           <button aria-label="Collapse debugger" className="nf-icon-button" onClick={onToggle} title="Collapse debugger" type="button"><PanelBottomClose aria-hidden="true" size={17} /></button>
@@ -161,6 +164,9 @@ export function DebuggerPanel({ busy, collapsed, events: liveEvents, historyAvai
           <span><strong>{summary.failed}</strong>Failed</span>
           <span><strong>{summary.skipped}</strong>Skipped</span>
         </div>
+        {summary.status === "completed" && finalNodeEvent ? <div className="nf-run-outcome" role="status"><CheckCircle2 aria-hidden="true" size={17} /><span><strong>Workflow completed</strong><small>Your final result is ready in {nodeLabels[finalNodeEvent.nodeId] ?? finalNodeEvent.nodeId}.</small></span><button onClick={() => { selectEvent(finalNodeEvent); showData("output"); }} type="button">View final output</button></div> : null}
+        {summary.status === "failed" && failedNodeEvent ? <div className="nf-run-outcome nf-run-outcome--failed" role="alert"><AlertCircle aria-hidden="true" size={17} /><span><strong>Workflow stopped at {nodeLabels[failedNodeEvent.nodeId] ?? failedNodeEvent.nodeId}</strong><small>{failedNodeEvent.error.message}</small></span><button onClick={() => { selectEvent(failedNodeEvent); showData("error"); }} type="button">View error</button></div> : null}
+        {interrupted ? <div className="nf-run-outcome nf-run-outcome--failed" role="alert"><AlertCircle aria-hidden="true" size={17} /><span><strong>Run connection interrupted</strong><small>{statusMessage}</small></span><button onClick={onRun} type="button">Retry run</button></div> : null}
         <ol className="nf-debugger__timeline" aria-label="Run events in server order">
           {events.map((event) => {
             const nodeId = eventNodeId(event);

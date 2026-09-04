@@ -73,7 +73,7 @@ describe("workflow store", () => {
   it("applies deterministic layout and can undo it", () => {
     useStore.setState({ nodes: [{ ...node, position: { x: 900, y: 900 } }] });
     useStore.getState().autoLayout();
-    expect(useStore.getState().nodes[0]?.position).toEqual({ x: 80, y: 220 });
+    expect(useStore.getState().nodes[0]?.position).toEqual({ x: 72, y: 220 });
     useStore.getState().undo();
     expect(useStore.getState().nodes[0]?.position).toEqual({ x: 900, y: 900 });
   });

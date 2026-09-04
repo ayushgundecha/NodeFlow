@@ -1,4 +1,4 @@
-import { Box, Circle, PanelLeftClose, Plus, Search } from "lucide-react";
+import { Box, Circle, PanelLeftClose, PanelLeftOpen, Plus, Search } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { nodeDefinitions, type NodeCategory } from "../../domain/nodes/registry";
 import { useEditorStore } from "../editor/editorStore";
@@ -41,8 +41,23 @@ export function NodeLibrary({ collapsed, onNodeAdded, onToggle }: NodeLibraryPro
     onNodeAdded();
   };
 
+  if (collapsed) {
+    return (
+      <aside aria-label="Collapsed node library" className="nf-library-rail">
+        <button aria-label="Expand node library" className="nf-library-rail__toggle" onClick={onToggle} title="Expand node library" type="button"><PanelLeftOpen aria-hidden="true" size={18} /></button>
+        <div aria-label="Quick-add nodes" className="nf-library-rail__nodes" role="toolbar">
+          {nodeDefinitions.map((definition) => {
+            const Icon = nodeIcons[definition.icon];
+            return <button aria-label={`Add ${definition.label} node`} className={`nf-library-rail__node nf-node-tone--${definition.category}`} key={definition.type} onClick={() => insertNode(definition.type)} title={`Add ${definition.label}`} type="button"><Icon aria-hidden="true" size={17} /></button>;
+          })}
+        </div>
+        <span aria-label={`${nodeDefinitions.length} node types available`} className="nf-library-rail__count">{nodeDefinitions.length}</span>
+      </aside>
+    );
+  }
+
   return (
-    <aside aria-label="Node library" className="nf-shell-panel nf-library" hidden={collapsed}>
+    <aside aria-label="Node library" className="nf-shell-panel nf-library">
       <header className="nf-panel-heading">
         <div><Box aria-hidden="true" size={17} /><h2>Node library</h2></div>
         <button aria-label="Collapse node library" className="nf-icon-button" onClick={onToggle} title="Collapse node library" type="button"><PanelLeftClose aria-hidden="true" size={17} /></button>

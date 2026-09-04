@@ -5,7 +5,7 @@ import { defaultWorkflowTemplate, workflowTemplates } from "./workflowTemplates"
 
 describe("workflow templates", () => {
   it("defines the three promised graphs predictably", () => {
-    expect(workflowTemplates.map((template) => template.name)).toEqual(["Alert Brief", "GitHub Release Digest", "Data Quality Gate"]);
+    expect(workflowTemplates.map((template) => template.name)).toEqual(["Incident Response Demo", "GitHub Release Digest", "Data Quality Gate"]);
     workflowTemplates.forEach((template) => {
       expect(template.nodes.length).toBeGreaterThanOrEqual(5);
       expect(new Set(template.nodes.map((node) => node.id)).size).toBe(template.nodes.length);
@@ -29,7 +29,7 @@ describe("workflow templates", () => {
     expect(quality.nodes.filter((node) => node.data.nodeType === "output")).toHaveLength(1);
   });
 
-  it("sends the Alert Brief condition through its true branch using real port IDs", () => {
+  it("sends the Incident Response condition through its true branch using real port IDs", () => {
     const workflow = editorWorkspaceToExecutionWorkflow(createEditorWorkspace(defaultWorkflowTemplate));
     expect(workflow.edges ?? []).toContainEqual(expect.objectContaining({
       source: "condition-4",

@@ -10,11 +10,18 @@ afterEach(() => {
 });
 
 describe("WorkspaceExperience", () => {
-  it("gives a first-time visitor an explicit blank-canvas path", () => {
-    const onReplace = vi.fn();
-    render(<WorkspaceExperience currentWorkspace={createEditorWorkspace(defaultWorkflowTemplate)} onClose={vi.fn()} onReplace={onReplace} open={false} />);
+  it("keeps first load free of a blocking welcome overlay", () => {
+    render(<WorkspaceExperience currentWorkspace={createEditorWorkspace(defaultWorkflowTemplate)} onClose={vi.fn()} onReplace={vi.fn()} open={false} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Start blank" }));
+    expect(screen.queryByLabelText("Welcome to NodeFlow")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("gives visitors an explicit blank-canvas path from the workspace menu", () => {
+    const onReplace = vi.fn();
+    render(<WorkspaceExperience currentWorkspace={createEditorWorkspace(defaultWorkflowTemplate)} onClose={vi.fn()} onReplace={onReplace} open />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Start a blank workflow" }));
     expect(screen.getByRole("alertdialog")).toHaveTextContent("a blank canvas");
     expect(screen.getByRole("button", { name: "Replace workflow" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Replace workflow" }));

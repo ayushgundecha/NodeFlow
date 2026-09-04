@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, CircleDot, LoaderCircle, XCircle } from "lucide-react";
+import { CheckCircle2, CircleDot, LoaderCircle, XCircle } from "lucide-react";
 import { Handle, Position } from "reactflow";
 import type { PortDefinition } from "../../contracts/types";
 import { getNodeDefinition } from "../../domain/nodes/registry";
@@ -18,9 +18,8 @@ const statusLabels = {
   succeeded: "Succeeded",
 } as const;
 
-const statusIcons: Record<NonNullable<FlowNode["data"]["status"]>, typeof Circle> = {
+const statusIcons: Record<Exclude<NonNullable<FlowNode["data"]["status"]>, "idle">, typeof CircleDot> = {
   failed: XCircle,
-  idle: Circle,
   paused: CircleDot,
   queued: CircleDot,
   running: LoaderCircle,
@@ -49,7 +48,7 @@ export function CompactNodeCard({ activePort, node, onPortChange, onSelect, sele
   const definition = getNodeDefinition(node.data.nodeType as Parameters<typeof getNodeDefinition>[0]);
   const Icon = nodeIcons[definition.icon];
   const status = runtimeStatus ?? node.data.status ?? "idle";
-  const StatusIcon = statusIcons[status];
+  const StatusIcon = status === "idle" ? null : statusIcons[status];
   const inputs = definition.ports.filter((port) => port.direction === "input");
   const outputs = definition.ports.filter((port) => port.direction === "output");
 
@@ -64,10 +63,10 @@ export function CompactNodeCard({ activePort, node, onPortChange, onSelect, sele
         onClick={() => onPortChange(mode === "source" ? null : { dataType: port.dataType, direction: port.direction, nodeId: node.id, portId: port.id })}
         title={`${port.label} · ${port.dataType}`}
         type="button"
-      ><i aria-hidden="true" /><span>{port.label}</span><small>{port.dataType}</small></button>
+      ><span>{port.label}</span><small>{port.dataType}</small></button>
       <Handle
         aria-label={`Drag ${port.label} ${port.direction} port`}
-        className={`nf-react-flow-handle nf-react-flow-handle--${port.direction}`}
+        className={`nf-react-flow-handle nf-react-flow-handle--${port.direction} nf-react-flow-handle--${port.dataType} nf-react-flow-handle--${mode}`}
         id={port.id}
         position={port.direction === "input" ? Position.Left : Position.Right}
         type={port.direction === "input" ? "target" : "source"}
@@ -77,11 +76,11 @@ export function CompactNodeCard({ activePort, node, onPortChange, onSelect, sele
   };
 
   return (
-    <article aria-describedby={validationMessage ? `${node.id}-validation` : undefined} className={`nf-registry-node nf-registry-node--${status}${selected ? " nf-registry-node--selected" : ""}${validationMessage ? " nf-registry-node--invalid" : ""}`}>
-      <button aria-label={`Select ${node.data.label ?? definition.label} node`} className="nf-registry-node__select" onClick={(event) => onSelect(node.id, event.shiftKey)} type="button">
+    <article aria-describedby={validationMessage ? `${node.id}-validation` : undefined} className={`nf-registry-node nf-node-category--${definition.category} nf-registry-node--${status}${selected ? " nf-registry-node--selected" : ""}${validationMessage ? " nf-registry-node--invalid" : ""}`}>
+      <button aria-label={`Select ${node.data.label ?? definition.label} node, ${statusLabels[status]}${selected ? ", currently selected" : ""}`} className="nf-registry-node__select" onClick={(event) => onSelect(node.id, event.shiftKey)} type="button">
         <span className={`nf-registry-node__icon nf-node-tone--${definition.category}`}><Icon aria-hidden="true" size={17} /></span>
         <span><small>{nodeCategoryLabels[definition.category]}</small><strong>{node.data.label ?? definition.label}</strong></span>
-        <span className={`nf-registry-node__status nf-registry-node__status--${status}`}><StatusIcon aria-hidden="true" size={12} />{selected ? "Selected" : statusLabels[status]}</span>
+        {StatusIcon ? <span className={`nf-registry-node__status nf-registry-node__status--${status}`}><StatusIcon aria-hidden="true" size={12} />{statusLabels[status]}</span> : null}
       </button>
       <div className="nf-registry-node__ports">
         <div>{inputs.map(renderPort)}</div>

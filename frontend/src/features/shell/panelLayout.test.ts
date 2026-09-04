@@ -8,6 +8,14 @@ import {
 } from './panelLayout';
 
 describe('panel layout persistence', () => {
+  it('starts with the canvas focused and secondary panels closed', () => {
+    expect(DEFAULT_PANEL_LAYOUT).toMatchObject({
+      debuggerCollapsed: true,
+      inspectorCollapsed: true,
+      libraryCollapsed: false,
+    });
+  });
+
   it('clamps resized panels to their supported range', () => {
     expect(clampPanelSize(120, { min: 200, max: 400 })).toBe(200);
     expect(clampPanelSize(460, { min: 200, max: 400 })).toBe(400);
