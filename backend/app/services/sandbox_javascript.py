@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -17,6 +16,7 @@ from typing import Any, Protocol, cast
 
 from pydantic import TypeAdapter, ValidationError
 from vercel import sandbox
+from vercel.oidc.credentials import get_credentials
 from vercel.sandbox import NetworkPolicy, SandboxResources
 
 from ..models.base import JsonValue
@@ -88,19 +88,17 @@ class VercelSandboxFactory:
     """Creates a single-use, air-gapped microVM for one JavaScript node."""
 
     async def create(self) -> SandboxBox:
-        # Vercel's local development runtime also injects an OIDC token, but
-        # does not set the same deployment marker as production. SDK failures
-        # are mapped below so an invalid manually supplied token is still safe.
-        has_oidc = bool(os.environ.get("VERCEL_OIDC_TOKEN"))
-        has_access_token = all(
-            os.environ.get(name) for name in ("VERCEL_TOKEN", "VERCEL_PROJECT_ID", "VERCEL_TEAM_ID")
-        )
-        if not (has_oidc or has_access_token):
+        try:
+            # In a deployed Vercel Function the SDK resolves the short-lived
+            # OIDC token from x-vercel-oidc-token. Direct local use still
+            # resolves VERCEL_TOKEN, VERCEL_PROJECT_ID, and VERCEL_TEAM_ID.
+            get_credentials()
+        except Exception as error:
             raise AdapterExecutionError(
                 "sandbox_unavailable",
                 "JavaScript execution is unavailable until Vercel Sandbox credentials "
                 "are configured.",
-            )
+            ) from error
         try:
             return cast(
                 SandboxBox,

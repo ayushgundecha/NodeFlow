@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import pytest
+from vercel.headers import HeadersContext, get_headers
 
 from app.models.workflow import WorkflowDefinition
 from app.services import sandbox_javascript
@@ -245,8 +246,10 @@ def test_cancellation_destroys_the_microvm() -> None:
 def test_vercel_factory_fails_closed_without_sandbox_credentials(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    for name in ("VERCEL_OIDC_TOKEN", "VERCEL_TOKEN", "VERCEL_PROJECT_ID", "VERCEL_TEAM_ID"):
-        monkeypatch.delenv(name, raising=False)
+    def missing_credentials() -> None:
+        raise RuntimeError("missing credentials")
+
+    monkeypatch.setattr(sandbox_javascript, "get_credentials", missing_credentials)
 
     with pytest.raises(AdapterExecutionError) as error:
         run(VercelSandboxFactory().create())
@@ -264,10 +267,15 @@ def test_vercel_factory_creates_a_fresh_air_gapped_microvm(
         captured.update(kwargs)
         return box
 
-    monkeypatch.setenv("VERCEL_OIDC_TOKEN", "test-token-not-used")
+    def credentials_from_vercel_request() -> object:
+        assert get_headers() == {"x-vercel-oidc-token": "runtime-token"}
+        return object()
+
+    monkeypatch.setattr(sandbox_javascript, "get_credentials", credentials_from_vercel_request)
     monkeypatch.setattr(sandbox_javascript.sandbox, "create_sandbox", create_sandbox)
 
-    assert run(VercelSandboxFactory().create()) is box
+    with HeadersContext({"x-vercel-oidc-token": "runtime-token"}).use():
+        assert run(VercelSandboxFactory().create()) is box
     assert captured["execution_time_limit"] == 5
     assert captured["persistent"] is False
     assert captured["env"] == {}
@@ -283,7 +291,7 @@ def test_vercel_factory_maps_sdk_failures_to_a_safe_recoverable_error(
     async def create_sandbox(**_: Any) -> FakeBox:
         raise RuntimeError("provider details must not reach the client")
 
-    monkeypatch.setenv("VERCEL_OIDC_TOKEN", "test-token-not-used")
+    monkeypatch.setattr(sandbox_javascript, "get_credentials", lambda: object())
     monkeypatch.setattr(sandbox_javascript.sandbox, "create_sandbox", create_sandbox)
 
     with pytest.raises(AdapterExecutionError) as error:

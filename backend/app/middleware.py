@@ -5,11 +5,37 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from vercel.headers import HeadersContext, headers_from_asgi_scope
+
 MAX_API_REQUEST_BYTES = 512 * 1024
 
 
 class RequestTooLargeError(Exception):
     pass
+
+
+class VercelRequestHeadersMiddleware:
+    """Expose Vercel's request-scoped OIDC token to its Python SDK.
+
+    Vercel delivers ``x-vercel-oidc-token`` to Functions as a request header,
+    rather than a long-lived process environment variable. The SDK reads that
+    header from a ContextVar, which must be scoped to the full ASGI request.
+    """
+
+    def __init__(self, app: Callable[..., Awaitable[None]]) -> None:
+        self.app = app
+
+    async def __call__(
+        self,
+        scope: dict[str, Any],
+        receive: Callable[[], Awaitable[dict[str, Any]]],
+        send: Callable[[dict[str, Any]], Awaitable[None]],
+    ) -> None:
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+        with HeadersContext(headers_from_asgi_scope(scope)).use():
+            await self.app(scope, receive, send)
 
 
 class ApiRequestSizeLimitMiddleware:
