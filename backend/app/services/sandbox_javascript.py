@@ -22,11 +22,14 @@ from vercel.sandbox import NetworkPolicy, SandboxResources
 from ..models.base import JsonValue
 from ..models.workflow import JavaScriptNode, WorkflowNode
 from .deterministic_adapters import AdapterExecutionError
+from .rate_limits import SlidingWindowRateLimiter
 from .scheduler import NodeExecutionContext, NodeExecutionResult
 
 SOURCE_LIMIT_BYTES = 10 * 1024
 OUTPUT_LIMIT_BYTES = 64 * 1024
 LOG_LIMIT_BYTES = 32 * 1024
+SANDBOX_EXECUTIONS_PER_HOUR = 5
+SANDBOX_RATE_LIMITER = SlidingWindowRateLimiter(SANDBOX_EXECUTIONS_PER_HOUR, 60 * 60)
 CODE_TIMEOUT_SECONDS = 3
 SANDBOX_LIFETIME_SECONDS = 5
 JSON_ADAPTER: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
@@ -87,8 +90,7 @@ class VercelSandboxFactory:
     async def create(self) -> SandboxBox:
         has_oidc = bool(os.environ.get("VERCEL_OIDC_TOKEN"))
         has_access_token = all(
-            os.environ.get(name)
-            for name in ("VERCEL_TOKEN", "VERCEL_PROJECT_ID", "VERCEL_TEAM_ID")
+            os.environ.get(name) for name in ("VERCEL_TOKEN", "VERCEL_PROJECT_ID", "VERCEL_TEAM_ID")
         )
         if not (has_oidc or has_access_token):
             raise AdapterExecutionError(
@@ -96,15 +98,19 @@ class VercelSandboxFactory:
                 "JavaScript execution is unavailable until Vercel Sandbox credentials "
                 "are configured.",
             )
-        return cast(SandboxBox, await sandbox.create_sandbox(
-            execution_time_limit=SANDBOX_LIFETIME_SECONDS,
-            resources=SandboxResources(vcpus=1, memory=1024),
-            persistent=False,
-            network_policy=NetworkPolicy.deny_all(),
-            # Do not project API-host configuration or credentials into the VM.
-            env={},
-            tags={"workload": "nodeflow-javascript"},
-        ))
+        return cast(
+            SandboxBox,
+            await sandbox.create_sandbox(
+                execution_time_limit=SANDBOX_LIFETIME_SECONDS,
+                # Vercel Sandbox enforces a 2 GB minimum allocation.
+                resources=SandboxResources(vcpus=1, memory=2048),
+                persistent=False,
+                network_policy=NetworkPolicy.deny_all(),
+                # Do not project API-host configuration or credentials into the VM.
+                env={},
+                tags={"workload": "nodeflow-javascript"},
+            ),
+        )
 
 
 class JavaScriptSandboxRunner:
@@ -168,8 +174,13 @@ class JavaScriptSandboxRunner:
 class JavaScriptAdapter:
     """Scheduler adapter for user code; it only delegates to a microVM runner."""
 
-    def __init__(self, runner: JavaScriptSandboxRunner | None = None) -> None:
+    def __init__(
+        self,
+        runner: JavaScriptSandboxRunner | None = None,
+        limiter: SlidingWindowRateLimiter | None = None,
+    ) -> None:
         self._runner = runner or JavaScriptSandboxRunner()
+        self._limiter = limiter or SANDBOX_RATE_LIMITER
 
     async def execute(
         self, node: WorkflowNode, context: NodeExecutionContext
@@ -180,6 +191,11 @@ class JavaScriptAdapter:
             )
         if context.cancellation.is_set():
             raise asyncio.CancelledError
+        if not self._limiter.allow(context.rate_key):
+            raise AdapterExecutionError(
+                "sandbox_rate_limited",
+                "This visitor has reached the five-per-hour JavaScript demo limit.",
+            )
         execution = await self._runner.execute(
             node.config.source,
             {

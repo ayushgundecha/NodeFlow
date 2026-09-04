@@ -110,9 +110,7 @@ def test_transform_supports_paths_and_json_projections_without_eval() -> None:
 def test_condition_activates_exactly_one_declarative_branch(
     operator: str, expected_handle: str
 ) -> None:
-    node = make_node(
-        "condition", {"rule": {"path": "severity", "operator": operator, "value": 4}}
-    )
+    node = make_node("condition", {"rule": {"path": "severity", "operator": operator, "value": 4}})
 
     result = execute(ConditionAdapter(), node, inputs={"input": ({"severity": 5},)})
 
@@ -135,9 +133,7 @@ def test_merge_is_ordered_and_object_conflicts_are_explicit() -> None:
     assert array.outputs == {"output": [2, 1]}
     assert merged.outputs == {"output": {"a": 1, "b": 2}}
     with pytest.raises(AdapterExecutionError) as error:
-        execute(
-            MergeAdapter(), object_node, inputs={"items": ({"duplicate": 1}, {"duplicate": 2})}
-        )
+        execute(MergeAdapter(), object_node, inputs={"items": ({"duplicate": 1}, {"duplicate": 2})})
     assert error.value.code == "merge_conflict"
 
 

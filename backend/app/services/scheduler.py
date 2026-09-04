@@ -40,6 +40,7 @@ class NodeExecutionContext:
     inputs: Mapping[str, tuple[JsonValue, ...]]
     run_input: JsonValue
     cancellation: asyncio.Event
+    rate_key: str = "anonymous"
 
     def first_input(self, handle: str, default: JsonValue = None) -> JsonValue:
         values = self.inputs.get(handle, ())
@@ -152,12 +153,13 @@ class WorkflowScheduler:
         *,
         run_input: JsonValue = None,
         cancellation: asyncio.Event | None = None,
+        rate_key: str = "anonymous",
     ) -> WorkflowRunResult:
         started_at = monotonic()
         cancellation = cancellation or asyncio.Event()
         try:
             result = await asyncio.wait_for(
-                self._run(plan, run_input, cancellation, started_at),
+                self._run(plan, run_input, cancellation, started_at, rate_key),
                 timeout=self._timeout_seconds,
             )
         except TimeoutError:
@@ -182,6 +184,7 @@ class WorkflowScheduler:
         run_input: JsonValue,
         cancellation: asyncio.Event,
         started_at: float,
+        rate_key: str,
     ) -> WorkflowRunResult:
         workflow = plan.workflow
         nodes = {node.id: node for node in workflow.nodes}
@@ -227,7 +230,9 @@ class WorkflowScheduler:
                     state.state = NodeRunState.RUNNING
                     await self._emit(NodeTransition(node_id, NodeRunState.RUNNING))
                     task = asyncio.create_task(
-                        self._execute(nodes[node_id], state.inputs, run_input, cancellation),
+                        self._execute(
+                            nodes[node_id], state.inputs, run_input, cancellation, rate_key
+                        ),
                         name=f"nodeflow:{node_id}",
                     )
                     active[task] = (node_id, monotonic())
@@ -277,9 +282,7 @@ class WorkflowScheduler:
                         state.error = str(adapter_error) or "Node adapter failed."
                         state.blocking_skip = True
                     completed.add(node_id)
-                    await self._emit(
-                        NodeTransition(node_id, state.state, state.freeze(node_id))
-                    )
+                    await self._emit(NodeTransition(node_id, state.state, state.freeze(node_id)))
 
                 propagated = True
                 while propagated:
@@ -312,9 +315,7 @@ class WorkflowScheduler:
                             )
             status = self._terminal_status(states, nodes)
             status_error = (
-                None
-                if status is WorkflowRunStatus.COMPLETED
-                else "Required outputs unavailable."
+                None if status is WorkflowRunStatus.COMPLETED else "Required outputs unavailable."
             )
             return self._result(status, states, nodes, started_at, status_error)
         finally:
@@ -329,6 +330,7 @@ class WorkflowScheduler:
         inputs: Mapping[str, tuple[JsonValue, ...]],
         run_input: JsonValue,
         cancellation: asyncio.Event,
+        rate_key: str,
     ) -> NodeExecutionResult:
         adapter = self._adapters.get(node.type)
         if adapter is None:
@@ -336,7 +338,10 @@ class WorkflowScheduler:
         return await adapter.execute(
             node,
             NodeExecutionContext(
-                inputs=dict(inputs), run_input=run_input, cancellation=cancellation
+                inputs=dict(inputs),
+                run_input=run_input,
+                cancellation=cancellation,
+                rate_key=rate_key,
             ),
         )
 

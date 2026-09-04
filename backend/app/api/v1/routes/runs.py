@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
 from ....models.workflow import RunRequest
+from ....services.observability import request_correlation_id
 from ....services.run_stream import stream_run
 
 router = APIRouter(prefix="/runs", tags=["runs"])
@@ -11,12 +12,14 @@ router = APIRouter(prefix="/runs", tags=["runs"])
 
 @router.post("", response_class=StreamingResponse)
 def create_run(run_request: RunRequest, request: Request) -> StreamingResponse:
+    request_id = request_correlation_id(request.headers.get("x-request-id"))
     return StreamingResponse(
-        stream_run(run_request, request),
+        stream_run(run_request, request, request_id=request_id),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache, no-transform",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
+            "X-Request-ID": request_id,
         },
     )

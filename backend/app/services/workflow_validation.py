@@ -264,8 +264,10 @@ def validate_workflow(workflow: WorkflowDefinition) -> ValidationResult:
                     field="targetHandle",
                 )
             )
-        if source_port and target_port and not _compatible(
-            source_port.data_type, target_port.data_type
+        if (
+            source_port
+            and target_port
+            and not _compatible(source_port.data_type, target_port.data_type)
         ):
             issues.append(
                 _issue(

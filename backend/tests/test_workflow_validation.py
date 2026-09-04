@@ -140,8 +140,7 @@ def test_public_demo_limits_return_structured_errors() -> None:
     payload = workflow_payload()
     payload["nodes"] = [node(f"input.{index}", "manualInput") for index in range(26)]
     payload["edges"] = [
-        edge(f"edge.{index}", "input.0", "value", "output", "value")
-        for index in range(41)
+        edge(f"edge.{index}", "input.0", "value", "output", "value") for index in range(41)
     ]
 
     assert {"graph_node_limit", "graph_edge_limit"}.issubset(error_codes(payload))

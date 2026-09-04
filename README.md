@@ -1,6 +1,6 @@
 # NodeFlow
 
-NodeFlow is becoming a visual workflow studio where people can compose typed nodes, execute a real DAG, and inspect every input, output, log, duration, failure, and retry. The current implementation is in Phase 1: its production contracts and engineering foundation are complete while the original light canvas remains available.
+NodeFlow is a visual workflow studio where people compose typed nodes, execute a real DAG, and inspect every input, output, log, duration, failure, and retry. The current implementation includes the Phase 4 secure runtime, visual debugger, local run replay, comparison, and real workflow templates.
 
 ## Local setup
 
@@ -60,3 +60,20 @@ npm run contracts:generate
 ```
 
 Generated frontend bundles are written to `backend/public/` for production serving and are intentionally ignored by Git.
+
+## Groq AI safety
+
+The LLM node uses Groq's OpenAI-compatible API through a server-only
+`GROQ_API_KEY`; it is never exposed in the browser. The default model is
+`openai/gpt-oss-20b`. Production must set `NODEFLOW_RATE_LIMIT_SALT` and keep
+the Groq project on its free tier: no paid fallback or automatic spending. The
+application permits five AI node executions and twenty workflow runs per
+anonymous visitor per hour. Missing credentials, exhausted free quota, and
+provider errors are shown as real failures; NodeFlow never substitutes a mocked
+AI result.
+
+## Local run history
+
+- The latest 10 completed or failed traces are stored only in the visitor's browser using IndexedDB; NodeFlow does not upload run history to a separate storage service.
+- Exact-graph traces can be replayed event by event. Runs from revisions of the same workflow can be compared for node, status, duration, and output changes.
+- History is versioned, can be cleared from the Runs debugger tab, and degrades to live-only debugging when browser storage is unavailable.

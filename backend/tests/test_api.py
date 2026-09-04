@@ -147,6 +147,7 @@ def test_run_endpoint_streams_complete_ordered_sse_wire_sequence() -> None:
     assert headers["content-type"].startswith("text/event-stream")
     assert headers["cache-control"] == "no-cache, no-transform"
     assert headers["x-accel-buffering"] == "no"
+    assert headers["x-request-id"].startswith("req_")
     assert [event["sequence"] for event in events] == list(range(len(events)))
     assert [event["type"] for event in events] == [
         "run.started",
@@ -165,3 +166,14 @@ def test_run_endpoint_streams_complete_ordered_sse_wire_sequence() -> None:
         "run.completed",
     ]
     assert events[-1]["outputs"] == {"Greeting": "Hello, Ada!"}
+
+
+def test_api_request_size_is_bounded_before_contract_parsing() -> None:
+    response = client.post(
+        "/api/v1/workflows/validate",
+        content=b"x" * (512 * 1024 + 1),
+        headers={"content-type": "application/json"},
+    )
+
+    assert response.status_code == 413
+    assert response.json() == {"detail": "API request exceeds the 512 KB limit."}

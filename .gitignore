@@ -17,6 +17,8 @@ frontend/node_modules/
 frontend/dist/
 frontend/*.tsbuildinfo
 backend/public/
+backend/build/
+backend/*.egg-info/
 
 # Local environment and tool output
 .DS_Store
@@ -25,3 +27,5 @@ backend/public/
 !.env.example
 coverage/
 coverage.xml
+.vercel
+.env*

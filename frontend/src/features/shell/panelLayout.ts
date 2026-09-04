@@ -11,7 +11,7 @@ export interface PanelLayout {
 
 export const DEFAULT_PANEL_LAYOUT: PanelLayout = {
   debuggerCollapsed: false,
-  debuggerHeight: 220,
+  debuggerHeight: 300,
   inspectorCollapsed: false,
   inspectorWidth: 320,
   libraryCollapsed: false,

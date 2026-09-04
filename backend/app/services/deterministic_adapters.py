@@ -295,7 +295,11 @@ def deterministic_adapters() -> Mapping[str, NodeAdapter]:
     }
     # Import lazily to keep the deterministic adapters independently testable
     # without giving them any ability to execute code on the API host.
+    from .groq import LlmAdapter
+    from .http_request import HttpRequestAdapter
     from .sandbox_javascript import JavaScriptAdapter
 
     adapters["javascript"] = JavaScriptAdapter()
+    adapters["httpRequest"] = HttpRequestAdapter()
+    adapters["llm"] = LlmAdapter()
     return adapters

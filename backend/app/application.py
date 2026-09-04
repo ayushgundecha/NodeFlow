@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .api.v1.router import router as api_v1_router
 from .config import Settings
+from .middleware import ApiRequestSizeLimitMiddleware
 from .openapi import install_contract_openapi
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -22,6 +23,7 @@ def create_app(settings: Settings) -> FastAPI:
         description="Build visually. Execute for real. Debug every step.",
     )
     app.state.settings = settings
+    app.add_middleware(ApiRequestSizeLimitMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.cors_origins),

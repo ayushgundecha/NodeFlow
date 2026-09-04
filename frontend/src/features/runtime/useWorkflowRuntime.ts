@@ -20,6 +20,16 @@ const statusForEvent = (event: RunEvent): RuntimeNodeStatus | null => {
   return null;
 };
 
+export const nodeStatusesForEvents = (events: readonly RunEvent[]) => {
+  const statuses: Record<string, RuntimeNodeStatus> = {};
+  for (const event of events) {
+    if (!("nodeId" in event)) continue;
+    const status = statusForEvent(event);
+    if (status) statuses[event.nodeId] = status;
+  }
+  return statuses;
+};
+
 const messageForState = (state: RunEventState, error: string | null, validating: boolean) => {
   if (validating) return "Validating workflow with the backend.";
   if (error) return error;
@@ -105,12 +115,7 @@ export function useWorkflowRuntime(workspace: EditorWorkspace) {
   }, []);
 
   const nodeStatuses = useMemo(() => {
-    const statuses: Record<string, RuntimeNodeStatus> = {};
-    for (const event of runState.events) {
-      if (!("nodeId" in event)) continue;
-      const status = statusForEvent(event);
-      if (status) statuses[event.nodeId] = status;
-    }
+    const statuses = nodeStatusesForEvents(runState.events);
     if (["cancelled", "disconnected"].includes(runState.connection)) {
       for (const [nodeId, status] of Object.entries(statuses)) {
         if (status === "queued" || status === "running") statuses[nodeId] = "paused";

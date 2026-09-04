@@ -48,9 +48,7 @@ def edge(
     }
 
 
-def plan(
-    nodes: list[dict[str, object]], edges: list[dict[str, str]]
-):
+def plan(nodes: list[dict[str, object]], edges: list[dict[str, str]]):
     workflow = WorkflowDefinition.model_validate(
         {
             "schemaVersion": "1.0",
@@ -130,10 +128,10 @@ def test_scheduler_caps_concurrency_and_waits_for_dependencies() -> None:
     roots = [node(f"input.{index}", "manualInput") for index in range(5)]
     nodes = [*roots, node("merge", "merge"), node("result", "output")]
     edges = [
-        edge(f"edge.{index}", f"input.{index}", "value", "merge", "items")
-        for index in range(5)
+        edge(f"edge.{index}", f"input.{index}", "value", "merge", "items") for index in range(5)
     ]
     edges.append(edge("edge.result", "merge", "output", "result", "value"))
+
     async def scenario():
         gates = {f"input.{index}": asyncio.Event() for index in range(5)}
         signals = {f"input.{index}": asyncio.Event() for index in range(5)}
@@ -219,6 +217,7 @@ def test_cancellation_stops_active_nodes_and_never_starts_dependents() -> None:
         edge("1", "input", "value", "transform", "input"),
         edge("2", "transform", "output", "out", "value"),
     ]
+
     async def scenario():
         cancellation = asyncio.Event()
         gate = asyncio.Event()

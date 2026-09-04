@@ -1,18 +1,13 @@
 import {
   CheckCircle2,
   ChevronDown,
-  Clock3,
   GitBranch,
-  LoaderCircle,
-  PanelBottomClose,
   PanelBottomOpen,
   Play,
   Redo2,
-  RotateCcw,
   Settings2,
   Share2,
   Square,
-  TerminalSquare,
   Undo2,
   type LucideIcon,
 } from 'lucide-react';
@@ -27,7 +22,10 @@ import { defaultWorkflowTemplate } from '../editor/workflowTemplates';
 import { NodeInspector } from '../nodes/NodeInspector';
 import { NodeLibrary } from '../nodes/NodeLibrary';
 import { RegistryWorkflowCanvas } from '../nodes/RegistryWorkflowCanvas';
-import { useWorkflowRuntime } from '../runtime/useWorkflowRuntime';
+import { nodeStatusesForEvents, useWorkflowRuntime } from '../runtime/useWorkflowRuntime';
+import { DebuggerPanel } from '../runs/DebuggerPanel';
+import { workflowSignature } from '../runs/runHistory';
+import { useRunHistory } from '../runs/useRunHistory';
 import type { RunEvent } from '../../contracts/types';
 import {
   DEFAULT_PANEL_LAYOUT,
@@ -109,44 +107,6 @@ function IconButton({ disabled, icon: Icon, label, onClick, pressed }: IconButto
   );
 }
 
-const eventSummary = (event: RunEvent) => {
-  if (event.type === 'node.log') return event.message;
-  if (event.type === 'node.failed' || event.type === 'run.failed') return event.error.message;
-  if (event.type === 'node.skipped') return event.reason;
-  if (event.type === 'node.completed') return `Completed in ${event.durationMs}ms`;
-  if (event.type === 'run.completed') return `Run completed in ${event.durationMs}ms`;
-  return event.type.replace('.', ' ');
-};
-
-interface DebuggerPanelProps {
-  busy: boolean;
-  collapsed: boolean;
-  events: RunEvent[];
-  onRun: () => void;
-  onStop: () => void;
-  onToggle: () => void;
-  retryable: boolean;
-  statusMessage: string;
-}
-
-function DebuggerPanel({ busy, collapsed, events, onRun, onStop, onToggle, retryable, statusMessage }: DebuggerPanelProps) {
-  const hasEvents = events.length > 0;
-  return (
-    <section aria-labelledby="debugger-title" className="nf-debugger" hidden={collapsed}>
-      <header className="nf-debugger__header">
-        <div><TerminalSquare aria-hidden="true" size={17} /><h2 id="debugger-title">Debugger</h2><span className={`nf-shell-badge${busy ? ' nf-shell-badge--running' : ''}`}>{busy ? <LoaderCircle aria-hidden="true" size={12} /> : <Clock3 aria-hidden="true" size={12} />}{busy ? 'Live run' : hasEvents ? 'Latest trace' : 'No active run'}</span></div>
-        <div><button className="nf-debug-tab nf-debug-tab--active" type="button">Timeline</button><button className="nf-debug-tab" type="button">Logs</button><button className="nf-debug-tab" type="button">Payload</button><IconButton icon={PanelBottomClose} label="Collapse debugger" onClick={onToggle} /></div>
-      </header>
-      {hasEvents ? <div className="nf-debugger__timeline" aria-label="Live run timeline">{events.map((event) => <div className={`nf-debug-event nf-debug-event--${event.type.replace('.', '-')}`} key={`${event.runId}.${event.sequence}`}><time>{String(event.sequence).padStart(3, '0')}</time><span>{event.type}</span><strong>{'nodeId' in event ? event.nodeId : 'workflow'}</strong><p>{eventSummary(event)}</p></div>)}</div> : <div className="nf-debugger__empty">
-        <span><Clock3 aria-hidden="true" size={20} /></span>
-        <div><strong>Ready to trace your workflow</strong><p>{statusMessage}</p></div>
-        <button className="nf-text-button" onClick={onRun} type="button"><Play aria-hidden="true" size={14} fill="currentColor" /> Run workflow</button>
-      </div>}
-      {busy || retryable ? <div className="nf-debugger__run-control"><span>{statusMessage}</span>{busy ? <button className="nf-button nf-button--secondary" onClick={onStop} type="button"><Square aria-hidden="true" fill="currentColor" size={12} /> Stop run</button> : <button className="nf-button nf-button--secondary" onClick={onRun} type="button"><RotateCcw aria-hidden="true" size={14} /> Retry run</button>}</div> : null}
-    </section>
-  );
-}
-
 function ProductHeader({ busy, name, onOpenWorkspace, onRun, onStop, validating }: { busy: boolean; name: string; onOpenWorkspace: () => void; onRun: () => void; onStop: () => void; validating: boolean }) {
   const canUndo = useStore((state) => state.historyPast.length > 0);
   const canRedo = useStore((state) => state.historyFuture.length > 0);
@@ -173,6 +133,7 @@ export function WorkspaceShell() {
     ? { id: initialLoad.workspace.id, name: initialLoad.workspace.name, description: initialLoad.workspace.description }
     : { id: defaultWorkflowTemplate.id, name: defaultWorkflowTemplate.name, description: defaultWorkflowTemplate.description });
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
+  const [replayEvents, setReplayEvents] = useState<RunEvent[] | null>(null);
   const didHydrate = useRef(false);
   const nodes = useStore((state) => state.nodes);
   const edges = useStore((state) => state.edges);
@@ -193,7 +154,11 @@ export function WorkspaceShell() {
   }, [edges, nodes, workspaceMeta]);
 
   const currentWorkspace = useMemo(() => createEditorWorkspace({ ...workspaceMeta, nodes, edges }), [edges, nodes, workspaceMeta]);
+  const nodeLabels = useMemo(() => Object.fromEntries(nodes.map((node) => [node.id, node.data.label ?? node.id])), [nodes]);
   const runtime = useWorkflowRuntime(currentWorkspace);
+  const history = useRunHistory(runtime.runState.events, currentWorkspace);
+  const displayedNodeStatuses = replayEvents ? nodeStatusesForEvents(replayEvents) : runtime.nodeStatuses;
+  const runWorkflow = () => { setReplayEvents(null); void runtime.run(); };
   useEffect(() => {
     if (runtime.validationIssues.length) window.requestAnimationFrame(() => document.getElementById('validation-summary')?.focus());
   }, [runtime.validationIssues.length]);
@@ -201,6 +166,7 @@ export function WorkspaceShell() {
     setWorkspaceMeta({ id: workspace.id, name: workspace.name, description: workspace.description });
     hydrateWorkflow(workspace.nodes, workspace.edges);
     selectNode(null);
+    setReplayEvents(null);
   };
   const skipToWorkflow = (event: ReactMouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
@@ -218,7 +184,7 @@ export function WorkspaceShell() {
     <>
       <a className="nf-skip-link" href="#workflow-canvas" onClick={skipToWorkflow}>Skip to workflow</a>
       <div className="nf-product-shell">
-        <ProductHeader busy={runtime.busy} name={workspaceMeta.name} onOpenWorkspace={() => setWorkspaceMenuOpen(true)} onRun={runtime.run} onStop={runtime.stop} validating={runtime.validating} />
+        <ProductHeader busy={runtime.busy} name={workspaceMeta.name} onOpenWorkspace={() => setWorkspaceMenuOpen(true)} onRun={runWorkflow} onStop={runtime.stop} validating={runtime.validating} />
         <p aria-atomic="true" className="nf-visually-hidden" role="status">{runtime.statusMessage}</p>
         <div className="nf-workflow-content" id="workflow-content" tabIndex={-1}>
           <ResponsiveReadOnlyViewer description={workspaceMeta.description} name={workspaceMeta.name} nodeStatuses={runtime.nodeStatuses} nodes={nodes} />
@@ -226,13 +192,13 @@ export function WorkspaceShell() {
           <NodeLibrary collapsed={layout.libraryCollapsed} onToggle={() => update({ libraryCollapsed: true })} />
           {layout.libraryCollapsed ? null : <ResizeHandle ariaLabel="Resize node library" axis="x" current={layout.libraryWidth} limits={PANEL_LIMITS.libraryWidth} onChange={(libraryWidth) => update({ libraryWidth })} slot="library" />}
           <div className="nf-canvas-column" id="workflow-canvas" tabIndex={-1}>
-            <Profiler id="RegistryWorkflowCanvas" onRender={recordReactRender}><RegistryWorkflowCanvas description={workspaceMeta.description} libraryCollapsed={layout.libraryCollapsed} nodeStatuses={runtime.nodeStatuses} onShowLibrary={() => update({ libraryCollapsed: false })} inspectorCollapsed={layout.inspectorCollapsed} onShowInspector={() => update({ inspectorCollapsed: false })} validationIssues={runtime.validationIssues} workflowName={workspaceMeta.name} /></Profiler>
+            <Profiler id="RegistryWorkflowCanvas" onRender={recordReactRender}><RegistryWorkflowCanvas description={workspaceMeta.description} libraryCollapsed={layout.libraryCollapsed} nodeStatuses={displayedNodeStatuses} onShowLibrary={() => update({ libraryCollapsed: false })} inspectorCollapsed={layout.inspectorCollapsed} onShowInspector={() => update({ inspectorCollapsed: false })} validationIssues={runtime.validationIssues} workflowName={workspaceMeta.name} /></Profiler>
             {layout.debuggerCollapsed ? (
               <button className="nf-debugger-restore" onClick={() => update({ debuggerCollapsed: false })} type="button"><PanelBottomOpen aria-hidden="true" size={16} /> Open debugger</button>
             ) : (
               <ResizeHandle ariaLabel="Resize debugger" axis="y" current={layout.debuggerHeight} limits={PANEL_LIMITS.debuggerHeight} onChange={(debuggerHeight) => update({ debuggerHeight })} reverse />
             )}
-            <DebuggerPanel busy={runtime.busy} collapsed={layout.debuggerCollapsed} events={runtime.runState.events} onRun={runtime.run} onStop={runtime.stop} onToggle={() => update({ debuggerCollapsed: true })} retryable={runtime.retryable} statusMessage={runtime.statusMessage} />
+            <DebuggerPanel busy={runtime.busy} collapsed={layout.debuggerCollapsed} events={runtime.runState.events} historyAvailable={history.available} key={runtime.runState.runId ?? 'idle'} nodeLabels={nodeLabels} onClearHistory={() => void history.clear()} onInspectNode={(nodeId) => { selectNode(nodeId); update({ inspectorCollapsed: false }); }} onReplayEvents={setReplayEvents} onRun={runWorkflow} onStop={runtime.stop} onToggle={() => update({ debuggerCollapsed: true })} retryable={runtime.retryable} statusMessage={runtime.statusMessage} traces={history.traces} workflowFormat={currentWorkspace.format} workflowId={currentWorkspace.id} workflowSignature={workflowSignature(currentWorkspace)} />
           </div>
           {layout.inspectorCollapsed ? null : <ResizeHandle ariaLabel="Resize inspector" axis="x" current={layout.inspectorWidth} limits={PANEL_LIMITS.inspectorWidth} onChange={(inspectorWidth) => update({ inspectorWidth })} reverse slot="inspector" />}
           <NodeInspector collapsed={layout.inspectorCollapsed} onToggle={() => update({ inspectorCollapsed: true })} validationIssues={runtime.validationIssues} />
