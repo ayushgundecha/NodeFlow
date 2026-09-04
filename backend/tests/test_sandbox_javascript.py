@@ -8,7 +8,6 @@ from vercel.headers import HeadersContext, get_headers
 from app.models.workflow import WorkflowDefinition
 from app.services import sandbox_javascript
 from app.services.deterministic_adapters import AdapterExecutionError
-from app.services.rate_limits import SlidingWindowRateLimiter
 from app.services.sandbox_javascript import (
     LOG_LIMIT_BYTES,
     JavaScriptAdapter,
@@ -110,18 +109,15 @@ def test_javascript_adapter_uses_files_not_host_shell_and_returns_json() -> None
     assert box.destroyed
 
 
-def test_javascript_execution_has_a_per_visitor_limit() -> None:
+def test_javascript_adapter_has_no_per_visitor_demo_cap() -> None:
     box = FakeBox()
     box.fs.files["output.json"] = "null"
-    adapter = JavaScriptAdapter(
-        JavaScriptSandboxRunner(FakeFactory(box)),
-        limiter=SlidingWindowRateLimiter(1, 3600),
-    )
+    adapter = JavaScriptAdapter(JavaScriptSandboxRunner(FakeFactory(box)))
     node = WorkflowDefinition.model_validate(
         {
             "schemaVersion": "1.0",
-            "id": "sandbox.limit",
-            "name": "Sandbox limit",
+            "id": "sandbox.unlimited",
+            "name": "Sandbox unrestricted",
             "nodes": [
                 {
                     "id": "script",
@@ -136,12 +132,9 @@ def test_javascript_execution_has_a_per_visitor_limit() -> None:
     context = NodeExecutionContext(
         inputs={}, run_input=None, cancellation=asyncio.Event(), rate_key="visitor"
     )
-    run(adapter.execute(node, context))
 
-    with pytest.raises(AdapterExecutionError) as error:
-        run(adapter.execute(node, context))
-
-    assert error.value.code == "sandbox_rate_limited"
+    for _ in range(6):
+        assert run(adapter.execute(node, context)).outputs == {"output": None}
 
 
 def test_javascript_runtime_error_is_bounded_and_sandbox_is_destroyed() -> None:

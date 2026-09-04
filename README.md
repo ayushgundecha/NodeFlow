@@ -66,11 +66,9 @@ Generated frontend bundles are written to `backend/public/` for production servi
 The LLM node uses Groq's OpenAI-compatible API through a server-only
 `GROQ_API_KEY`; it is never exposed in the browser. The default model is
 `openai/gpt-oss-20b`. Production must set `NODEFLOW_RATE_LIMIT_SALT` and keep
-the Groq project on its free tier: no paid fallback or automatic spending. The
-application permits five AI node executions and twenty workflow runs per
-anonymous visitor per hour. Missing credentials, exhausted free quota, and
-provider errors are shown as real failures; NodeFlow never substitutes a mocked
-AI result.
+the Groq project on its free tier: no paid fallback or automatic spending.
+NodeFlow preserves Groq's real quota failures rather than adding a separate
+per-visitor AI cap or substituting a mocked AI result.
 
 ## Local run history
 

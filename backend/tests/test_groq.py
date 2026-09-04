@@ -72,7 +72,7 @@ def execute(adapter: LlmAdapter, workflow_node: WorkflowNode, *, rate_key: str =
 
 def test_llm_adapter_renders_context_and_returns_usage() -> None:
     provider = FakeProvider()
-    adapter = LlmAdapter(provider, SlidingWindowRateLimiter(5, 3600))
+    adapter = LlmAdapter(provider)
 
     result = execute(adapter, node())
 
@@ -91,6 +91,16 @@ def test_llm_adapter_renders_context_and_returns_usage() -> None:
     }
 
 
+def test_llm_adapter_has_no_per_visitor_demo_cap() -> None:
+    provider = FakeProvider()
+    adapter = LlmAdapter(provider)
+
+    for _ in range(6):
+        assert execute(adapter, node()).outputs
+
+    assert len(provider.calls) == 6
+
+
 def test_prompt_rendering_is_bounded_and_has_no_expression_language() -> None:
     assert render_prompt("Input: {{ input }}", {"safe": True}) == 'Input: {"safe":true}'
     assert render_prompt("Context: {{ input }}", {"release": {"tag": "v1"}}) == (
@@ -107,21 +117,6 @@ def test_prompt_rendering_is_bounded_and_has_no_expression_language() -> None:
     with pytest.raises(AdapterExecutionError) as large:
         render_prompt("{{ input }}", "x" * 4_001)
     assert large.value.code == "ai_prompt_too_large"
-
-
-def test_five_per_hour_limit_is_enforced_per_anonymous_visitor() -> None:
-    provider = FakeProvider()
-    limiter = SlidingWindowRateLimiter(5, 3600)
-    adapter = LlmAdapter(provider, limiter)
-
-    for _ in range(5):
-        execute(adapter, node())
-    with pytest.raises(AdapterExecutionError) as error:
-        execute(adapter, node())
-
-    assert error.value.code == "ai_rate_limited"
-    assert len(provider.calls) == 5
-    assert execute(adapter, node(), rate_key="another-visitor").outputs
 
 
 def test_sliding_window_releases_expired_entries() -> None:

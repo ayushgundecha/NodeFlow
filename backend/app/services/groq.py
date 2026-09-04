@@ -16,7 +16,6 @@ from pydantic import TypeAdapter
 from ..models.base import JsonValue
 from ..models.workflow import LlmNode, WorkflowNode
 from .deterministic_adapters import AdapterExecutionError
-from .rate_limits import SlidingWindowRateLimiter
 from .scheduler import NodeExecutionContext, NodeExecutionResult
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
@@ -25,11 +24,9 @@ MAX_PROMPT_CHARS = 4_000
 MAX_OUTPUT_TOKENS = 512
 MAX_OUTPUT_CHARS = 8_192
 GROQ_TIMEOUT_SECONDS = 20.0
-AI_EXECUTIONS_PER_HOUR = 5
 TEMPLATE_EXPRESSION = re.compile(r"{{\s*input(?:\.([A-Za-z0-9_.]+))?\s*}}")
 MODEL_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*/[A-Za-z0-9][A-Za-z0-9._:-]*$")
 JSON_ADAPTER: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
-AI_RATE_LIMITER = SlidingWindowRateLimiter(AI_EXECUTIONS_PER_HOUR, 60 * 60)
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,10 +222,8 @@ class LlmAdapter:
     def __init__(
         self,
         provider: LlmProvider | None = None,
-        limiter: SlidingWindowRateLimiter | None = None,
     ) -> None:
         self._provider = provider or GroqProvider()
-        self._limiter = limiter or AI_RATE_LIMITER
 
     async def execute(
         self, node: WorkflowNode, context: NodeExecutionContext
@@ -241,10 +236,6 @@ class LlmAdapter:
             node.config.prompt_template,
             context.first_input("context"),
         )
-        if not self._limiter.allow(context.rate_key):
-            raise AdapterExecutionError(
-                "ai_rate_limited", "This visitor has reached the five-per-hour AI demo limit."
-            )
         generation = await self._provider.generate(
             system_prompt=node.config.system_prompt,
             prompt=prompt,
