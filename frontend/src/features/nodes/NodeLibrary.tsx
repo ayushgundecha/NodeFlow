@@ -3,15 +3,16 @@ import { useDeferredValue, useMemo, useState } from "react";
 import { nodeDefinitions, type NodeCategory } from "../../domain/nodes/registry";
 import { useEditorStore } from "../editor/editorStore";
 import { useStore } from "../../store";
-import type { FlowNode } from "../../types/editor";
 import { nodeCategoryLabels, nodeIcons } from "./nodePresentation";
+import { NODEFLOW_DRAG_TYPE, createLibraryNode } from "./workflowGraph";
 
 interface NodeLibraryProps {
   collapsed: boolean;
+  onNodeAdded: () => void;
   onToggle: () => void;
 }
 
-export function NodeLibrary({ collapsed, onToggle }: NodeLibraryProps) {
+export function NodeLibrary({ collapsed, onNodeAdded, onToggle }: NodeLibraryProps) {
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
   const addNode = useStore((state) => state.addNode);
@@ -35,14 +36,9 @@ export function NodeLibrary({ collapsed, onToggle }: NodeLibraryProps) {
     const definition = nodeDefinitions.find((candidate) => candidate.type === type);
     if (!definition) return;
     const id = getNodeID(type);
-    const node: FlowNode = {
-      id,
-      type: "registryNode",
-      position: { x: 100 + nodeCount * 48, y: 180 + (nodeCount % 3) * 120 },
-      data: { id, nodeType: type, label: definition.label, config: definition.createConfig(), status: "idle" },
-    };
-    addNode(node);
+    addNode(createLibraryNode(type, id, { x: 100 + nodeCount * 48, y: 180 + (nodeCount % 3) * 120 }));
     selectNode(id);
+    onNodeAdded();
   };
 
   return (
@@ -65,7 +61,7 @@ export function NodeLibrary({ collapsed, onToggle }: NodeLibraryProps) {
               {definitions.map((definition) => {
                 const Icon = nodeIcons[definition.icon];
                 return (
-                  <button aria-label={`Add ${definition.label} node`} className="nf-library-item" key={definition.type} onClick={() => insertNode(definition.type)} type="button">
+                  <button aria-label={`Add ${definition.label} node`} className="nf-library-item" draggable key={definition.type} onClick={() => insertNode(definition.type)} onDragStart={(event) => { event.dataTransfer.effectAllowed = "copy"; event.dataTransfer.setData(NODEFLOW_DRAG_TYPE, definition.type); event.dataTransfer.setData("text/plain", definition.type); }} type="button">
                     <span className={`nf-library-item__icon nf-node-tone--${definition.category}`}><Icon aria-hidden="true" size={17} /></span>
                     <span><strong>{definition.label}</strong><small>{definition.description}</small></span>
                     <Plus aria-hidden="true" size={16} />

@@ -88,6 +88,9 @@ class VercelSandboxFactory:
     """Creates a single-use, air-gapped microVM for one JavaScript node."""
 
     async def create(self) -> SandboxBox:
+        # Vercel's local development runtime also injects an OIDC token, but
+        # does not set the same deployment marker as production. SDK failures
+        # are mapped below so an invalid manually supplied token is still safe.
         has_oidc = bool(os.environ.get("VERCEL_OIDC_TOKEN"))
         has_access_token = all(
             os.environ.get(name) for name in ("VERCEL_TOKEN", "VERCEL_PROJECT_ID", "VERCEL_TEAM_ID")
@@ -98,19 +101,25 @@ class VercelSandboxFactory:
                 "JavaScript execution is unavailable until Vercel Sandbox credentials "
                 "are configured.",
             )
-        return cast(
-            SandboxBox,
-            await sandbox.create_sandbox(
-                execution_time_limit=SANDBOX_LIFETIME_SECONDS,
-                # Vercel Sandbox enforces a 2 GB minimum allocation.
-                resources=SandboxResources(vcpus=1, memory=2048),
-                persistent=False,
-                network_policy=NetworkPolicy.deny_all(),
-                # Do not project API-host configuration or credentials into the VM.
-                env={},
-                tags={"workload": "nodeflow-javascript"},
-            ),
-        )
+        try:
+            return cast(
+                SandboxBox,
+                await sandbox.create_sandbox(
+                    execution_time_limit=SANDBOX_LIFETIME_SECONDS,
+                    # Vercel Sandbox enforces a 2 GB minimum allocation.
+                    resources=SandboxResources(vcpus=1, memory=2048),
+                    persistent=False,
+                    network_policy=NetworkPolicy.deny_all(),
+                    # Do not project API-host configuration or credentials into the VM.
+                    env={},
+                    tags={"workload": "nodeflow-javascript"},
+                ),
+            )
+        except Exception as error:
+            raise AdapterExecutionError(
+                "sandbox_unavailable",
+                "JavaScript execution is temporarily unavailable; try again later.",
+            ) from error
 
 
 class JavaScriptSandboxRunner:
@@ -134,13 +143,26 @@ class JavaScriptSandboxRunner:
                 mode=0o600,
             )
             await box.fs.write_text("runner.mjs", RUNNER_SOURCE, mode=0o600)
-            completed = await box.run_process(
-                "node",
-                ["--disable-proto=throw", "--frozen-intrinsics", "runner.mjs"],
-                capture_output=True,
-                kill_after=CODE_TIMEOUT_SECONDS,
-                env={},
-            )
+            try:
+                completed = await asyncio.wait_for(
+                    box.run_process(
+                        "node",
+                        [
+                            "--no-warnings",
+                            "--disable-proto=throw",
+                            "--frozen-intrinsics",
+                            "runner.mjs",
+                        ],
+                        capture_output=True,
+                        kill_after=CODE_TIMEOUT_SECONDS,
+                        env={},
+                    ),
+                    timeout=CODE_TIMEOUT_SECONDS,
+                )
+            except TimeoutError as error:
+                raise AdapterExecutionError(
+                    "javascript_timeout", "JavaScript did not finish within the 3-second limit."
+                ) from error
             logs = _bounded_text(getattr(completed, "stdout", None), LOG_LIMIT_BYTES)
             stderr = _bounded_text(getattr(completed, "stderr", None), LOG_LIMIT_BYTES)
             if stderr:

@@ -22,9 +22,9 @@ const buildTemplate = (id: string, name: string, description: string, outcome: s
 };
 
 const incidentTriage = buildTemplate(
-  "incident-triage", "Incident Triage",
-  "Score a sample operational alert, route severe incidents, and prepare a short AI brief for human review.",
-  "A structured incident brief with the computed severity and full execution trace.",
+  "incident-triage", "Alert Brief",
+  "Turn one sample service alert into a short, human-reviewable brief. Follow each step as it runs.",
+  "A concise alert brief with a visible severity decision and full execution trace.",
   [
     { type: "manualInput", label: "Incident input", config: { inputKey: "incident", defaultValue: { service: "checkout-api", errorRate: 0.18, latencyMs: 1420, region: "ap-south-1" } } },
     { type: "transform", label: "Validate payload", config: { expression: "@" } },
@@ -63,8 +63,16 @@ const dataQualityGate = buildTemplate(
     { type: "merge", label: "Collect active result", config: { strategy: "array" } },
     { type: "output", label: "Quality decision", config: { label: "qualityDecision", format: "json" } },
   ],
-  [{ source: 0, target: 1 }, { source: 1, target: 2 }, { source: 2, sourceHandle: "true", target: 3 }, { source: 2, sourceHandle: "false", target: 4 }, { source: 3, target: 5, targetHandle: "items" }, { source: 4, target: 5, targetHandle: "items" }, { source: 5, target: 6 }],
+  [{ source: 0, target: 1 }, { source: 1, target: 2 }, { source: 2, sourceHandle: "true", target: 3 }, { source: 2, sourceHandle: "false", target: 4 }, { source: 3, target: 5, targetHandle: "items" }, { source: 4, target: 5, targetHandle: "items" }, { source: 5, sourceHandle: "output", target: 6 }],
 );
 
 export const workflowTemplates = [incidentTriage, githubReleaseDigest, dataQualityGate] as const;
 export const defaultWorkflowTemplate = workflowTemplates[0];
+export const blankWorkflowTemplate: WorkflowTemplate = {
+  id: "blank-workflow",
+  name: "Untitled workflow",
+  description: "Add a node, connect the steps, then run your own workflow.",
+  outcome: "A new empty workflow, ready to build.",
+  nodes: [],
+  edges: [],
+};

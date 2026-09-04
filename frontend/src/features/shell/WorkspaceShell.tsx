@@ -189,7 +189,7 @@ export function WorkspaceShell() {
         <div className="nf-workflow-content" id="workflow-content" tabIndex={-1}>
           <ResponsiveReadOnlyViewer description={workspaceMeta.description} name={workspaceMeta.name} nodeStatuses={runtime.nodeStatuses} nodes={nodes} />
           <main className="nf-workbench" style={style}>
-          <NodeLibrary collapsed={layout.libraryCollapsed} onToggle={() => update({ libraryCollapsed: true })} />
+          <NodeLibrary collapsed={layout.libraryCollapsed} onNodeAdded={() => update({ inspectorCollapsed: false })} onToggle={() => update({ libraryCollapsed: true })} />
           {layout.libraryCollapsed ? null : <ResizeHandle ariaLabel="Resize node library" axis="x" current={layout.libraryWidth} limits={PANEL_LIMITS.libraryWidth} onChange={(libraryWidth) => update({ libraryWidth })} slot="library" />}
           <div className="nf-canvas-column" id="workflow-canvas" tabIndex={-1}>
             <Profiler id="RegistryWorkflowCanvas" onRender={recordReactRender}><RegistryWorkflowCanvas description={workspaceMeta.description} libraryCollapsed={layout.libraryCollapsed} nodeStatuses={displayedNodeStatuses} onShowLibrary={() => update({ libraryCollapsed: false })} inspectorCollapsed={layout.inspectorCollapsed} onShowInspector={() => update({ inspectorCollapsed: false })} validationIssues={runtime.validationIssues} workflowName={workspaceMeta.name} /></Profiler>

@@ -43,6 +43,22 @@ No third-party client analytics are currently installed. If product analytics ar
 
 Keep runtime-log retention at the shortest interval that supports debugging. For an incident: inspect aggregate error codes and provider timing, disable the affected integration if cost is rising, preserve no payload content, and rotate any credential suspected of exposure.
 
+## Sandbox credential modes
+
+JavaScript runs only in a fresh Vercel Sandbox with deny-all networking and an empty environment. Vercel deployment and `vercel dev` provide short-lived Sandbox OIDC automatically. A direct local FastAPI process instead requires all three server-only settings: `VERCEL_TOKEN`, `VERCEL_PROJECT_ID`, and `VERCEL_TEAM_ID`.
+
+Do not put a copied OIDC token in a persistent local environment file; it can override the short-lived token injected by `vercel dev`. Missing, invalid, or unavailable Sandbox credentials are shown as the recoverable `sandbox_unavailable` node error.
+
+## Verification contract
+
+The automated suite verifies deny-all Sandbox creation, empty injected environment, source/output/log caps, timeout, cancellation cleanup, and safe provider-error mapping. The end-to-end check uses `vercel dev` with the project’s server-only Groq configuration and runs:
+
+- Alert Brief: manual input → transform → isolated JavaScript → condition → Groq → output.
+- GitHub Release Digest: public GitHub HTTPS request → bounded transform → Groq → output.
+- Data Quality Gate: deterministic true/false branch selection, inactive branch skip, merge, and output.
+
+Provider-free or unavailable paths must remain visible as typed node failures; never replace them with generated sample output.
+
 ## Zero-spend and quota alerts
 
 - Deploy on Vercel Hobby and use only included platform quotas. Do not upgrade the plan or enable paid overages.

@@ -44,6 +44,8 @@
 .nf-confirm-dialog p { color: var(--nf-color-foreground-muted); font-size: var(--nf-text-sm); }
 .nf-confirm-dialog div > div { display: flex; justify-content: flex-end; gap: var(--nf-space-2); }
 .nf-confirm-dialog button { min-height: 40px; padding: 0 var(--nf-space-3); border: 1px solid var(--nf-color-control-border); border-radius: var(--nf-radius-md); background: var(--nf-color-surface); cursor: pointer; }
+.nf-confirm-dialog .nf-button--primary { border-color: var(--nf-button-primary-bg); color: var(--nf-button-primary-fg); background: var(--nf-button-primary-bg); }
+.nf-confirm-dialog .nf-button--primary:hover:not(:disabled) { border-color: var(--nf-button-primary-bg-hover); background: var(--nf-button-primary-bg-hover); }
 .nf-product-header { height: 56px; display: grid; grid-template-columns: minmax(180px, 1fr) minmax(240px, auto) minmax(320px, 1fr); align-items: center; gap: var(--nf-space-4); padding: 0 var(--nf-space-3); border-bottom: 1px solid var(--nf-color-border-subtle); background: var(--nf-color-surface); position: relative; z-index: var(--nf-z-sticky); }
 .nf-product-brand, .nf-header-actions, .nf-header-workflow, .nf-header-workflow > button, .nf-header-workflow > span, .nf-product-header nav, .nf-command-group { display: flex; align-items: center; }
 .nf-product-brand { gap: var(--nf-space-2); }
@@ -124,7 +126,14 @@
 .nf-shell-badge svg { color: var(--nf-color-warning); }
 .nf-shell-badge--running { border-color: var(--nf-color-action); color: var(--nf-color-action); background: var(--nf-color-action-soft); }
 .nf-shell-badge--running svg { color: currentColor; animation: nf-spin 1s linear infinite; }
-.nf-canvas-stage { position: absolute; inset: 48px 0 0; z-index: 1; overflow: auto; padding: clamp(24px, 5vw, 64px); }
+.nf-canvas-stage { position: absolute; inset: 48px 0 0; z-index: 1; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.nf-canvas-intro { position: relative; z-index: 4; display: flex; align-items: flex-start; justify-content: space-between; gap: var(--nf-space-4); padding: var(--nf-space-4) clamp(24px, 5vw, 64px) var(--nf-space-2); background: linear-gradient(to bottom, var(--nf-color-workspace) 80%, transparent); pointer-events: none; }
+.nf-canvas-intro > * { pointer-events: auto; }
+.nf-react-flow { min-height: 0; }
+.nf-react-flow .react-flow__controls, .nf-react-flow .react-flow__minimap { border: 1px solid var(--nf-color-border); border-radius: var(--nf-radius-md); box-shadow: var(--nf-shadow-sm); }
+.nf-react-flow .react-flow__controls-button { border-bottom-color: var(--nf-color-border-subtle); color: var(--nf-color-foreground-soft); background: var(--nf-color-surface); }
+.nf-react-flow .react-flow__controls-button:hover { color: var(--nf-color-action); background: var(--nf-color-action-soft); }
+.nf-react-flow .react-flow__edge-path { stroke: var(--nf-color-action); stroke-width: 2; }
 .nf-canvas-title { width: min(520px, 100%); }
 .nf-overline { color: var(--nf-color-action); font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
 .nf-canvas-title h1 { margin: var(--nf-space-1) 0 var(--nf-space-1); color: var(--nf-color-brand); font-size: clamp(1.25rem, 2.5vw, 1.75rem); letter-spacing: -.03em; }
@@ -169,6 +178,11 @@
 .nf-node-validation { display: flex; align-items: flex-start; gap: var(--nf-space-1); margin: 0; padding: var(--nf-space-2); border-top: 1px solid var(--nf-color-danger-border); color: var(--nf-color-danger); background: var(--nf-color-danger-soft); font-size: 9px; line-height: var(--nf-leading-normal); }
 .nf-node-validation svg { flex: 0 0 auto; margin-top: 1px; }
 .nf-typed-port { min-width: 0; min-height: 28px; display: flex; align-items: center; gap: var(--nf-space-1); padding: 2px 3px; border: 1px solid transparent; border-radius: var(--nf-radius-sm); color: var(--nf-color-foreground-muted); background: transparent; cursor: crosshair; }
+.nf-typed-port-wrap { position: relative; }
+.nf-react-flow-handle { width: 18px; height: 18px; top: 50%; border: 2px solid var(--nf-color-action); border-radius: var(--nf-radius-full); background: var(--nf-color-surface); transform: translateY(-50%); }
+.nf-react-flow-handle--input { left: -15px; }
+.nf-react-flow-handle--output { right: -15px; }
+.nf-react-flow-handle:hover { background: var(--nf-color-action-soft); box-shadow: var(--nf-focus-ring); }
 .nf-typed-port--output { flex-direction: row-reverse; text-align: right; }
 .nf-typed-port span, .nf-typed-port small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nf-typed-port span { max-width: 58px; font-size: 9px; font-weight: 700; }
@@ -342,8 +356,9 @@
 @media (max-width: 1100px) {
   .nf-product-header { grid-template-columns: auto 1fr auto; }
   .nf-header-workflow > span, .nf-header-actions > .nf-icon-button, .nf-command-group { display: none; }
-  .nf-workbench { grid-template-columns: var(--nf-library-width) auto minmax(320px, 1fr) 0 0; }
-  .nf-inspector, .nf-resize-handle--inspector { display: none; }
+  .nf-workbench { position: relative; grid-template-columns: var(--nf-library-width) auto minmax(320px, 1fr) 0 0; }
+  .nf-inspector { width: min(360px, calc(100% - var(--nf-library-width) - 6px)); position: absolute; inset: 0 0 0 auto; z-index: var(--nf-z-menu); display: flex; grid-column: auto; box-shadow: var(--nf-shadow-lg); }
+  .nf-resize-handle--inspector { display: none; }
   .nf-workflow-preview { align-items: stretch; flex-direction: column; }
   .nf-registry-workflow { align-items: stretch; flex-direction: column; }
   .nf-registry-workflow__step { flex-direction: column; align-items: flex-start; }
@@ -407,7 +422,7 @@
   .nf-header-actions .nf-button svg { margin: 0; }
   .nf-workbench { grid-template-columns: 0 0 minmax(0, 1fr) 0 0; }
   .nf-library, .nf-inspector, .nf-workbench > .nf-resize-handle--x { display: none; }
-  .nf-canvas-stage { padding: var(--nf-space-5); }
+  .nf-canvas-intro { display: grid; gap: var(--nf-space-2); padding: var(--nf-space-4) var(--nf-space-5) var(--nf-space-2); }
   .nf-canvas-title p { max-width: 36ch; }
   .nf-editor-commandbar { max-width: 100%; overflow-x: auto; }
   .nf-editor-commandbar button { min-width: 34px; font-size: 0; }

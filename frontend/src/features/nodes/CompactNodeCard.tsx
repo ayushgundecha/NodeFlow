@@ -1,4 +1,5 @@
 import { CheckCircle2, Circle, CircleDot, LoaderCircle, XCircle } from "lucide-react";
+import { Handle, Position } from "reactflow";
 import type { PortDefinition } from "../../contracts/types";
 import { getNodeDefinition } from "../../domain/nodes/registry";
 import type { FlowNode } from "../../types/editor";
@@ -56,14 +57,22 @@ export function CompactNodeCard({ activePort, node, onPortChange, onSelect, sele
     const mode = compatibility(activePort, node.id, port);
     const feedback = mode === "compatible" ? "compatible" : mode === "incompatible" ? "not compatible" : mode === "source" ? "selected" : "available";
     return (
+      <div className="nf-typed-port-wrap" key={`${port.direction}.${port.id}`}>
       <button
         aria-label={`${port.direction} port ${port.label}, ${port.dataType}, ${feedback}`}
         className={`nf-typed-port nf-typed-port--${port.direction} nf-typed-port--${port.dataType} nf-typed-port--${mode}`}
-        key={`${port.direction}.${port.id}`}
         onClick={() => onPortChange(mode === "source" ? null : { dataType: port.dataType, direction: port.direction, nodeId: node.id, portId: port.id })}
         title={`${port.label} · ${port.dataType}`}
         type="button"
       ><i aria-hidden="true" /><span>{port.label}</span><small>{port.dataType}</small></button>
+      <Handle
+        aria-label={`Drag ${port.label} ${port.direction} port`}
+        className={`nf-react-flow-handle nf-react-flow-handle--${port.direction}`}
+        id={port.id}
+        position={port.direction === "input" ? Position.Left : Position.Right}
+        type={port.direction === "input" ? "target" : "source"}
+      />
+      </div>
     );
   };
 

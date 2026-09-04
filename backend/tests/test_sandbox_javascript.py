@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 
 from app.models.workflow import WorkflowDefinition
+from app.services import sandbox_javascript
 from app.services.deterministic_adapters import AdapterExecutionError
 from app.services.rate_limits import SlidingWindowRateLimiter
 from app.services.sandbox_javascript import (
@@ -52,8 +53,10 @@ class FakeBox:
 @dataclass
 class FakeFactory:
     box: FakeBox
+    created: bool = False
 
     async def create(self) -> FakeBox:
+        self.created = True
         return self.box
 
 
@@ -98,6 +101,7 @@ def test_javascript_adapter_uses_files_not_host_shell_and_returns_json() -> None
     assert box.run_arguments is not None
     command, args, kwargs = box.run_arguments
     assert command == "node"
+    assert "--no-warnings" in args
     assert args[-1] == "runner.mjs"
     assert kwargs["kill_after"] == 3
     assert "return { severity: input.severity };" in box.fs.files["user.mjs"]
@@ -162,6 +166,61 @@ def test_log_and_output_limits_are_enforced_without_leaking_unbounded_data() -> 
     assert box.destroyed
 
 
+def test_log_flood_is_truncated_and_a_timeout_still_destroys_the_microvm() -> None:
+    box = FakeBox(
+        completed=Completed(
+            returncode=137,
+            stdout="x" * (LOG_LIMIT_BYTES + 100),
+            stderr="Execution terminated after the configured time limit.",
+        )
+    )
+    runner = JavaScriptSandboxRunner(FakeFactory(box))
+
+    with pytest.raises(AdapterExecutionError) as error:
+        run(runner.execute("while (true) {}", {"input": None}))
+
+    assert error.value.code == "javascript_failed"
+    assert "[output truncated]" in error.value.message
+    assert len(error.value.message.encode("utf-8")) <= (
+        LOG_LIMIT_BYTES + len(b"\n[output truncated]")
+    )
+    assert box.run_arguments is not None
+    assert box.run_arguments[2]["kill_after"] == 3
+    assert box.destroyed
+
+
+def test_process_timeout_has_an_actionable_error_and_destroys_the_microvm(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class SlowBox(FakeBox):
+        async def run_process(self, command: str, args: list[str], **kwargs: Any) -> Completed:
+            self.run_arguments = (command, args, kwargs)
+            await asyncio.Event().wait()
+            return self.completed
+
+    monkeypatch.setattr(sandbox_javascript, "CODE_TIMEOUT_SECONDS", 0.01)
+    box = SlowBox()
+
+    with pytest.raises(AdapterExecutionError) as error:
+        run(JavaScriptSandboxRunner(FakeFactory(box)).execute("while (true) {}", {"input": None}))
+
+    assert error.value.code == "javascript_timeout"
+    assert box.destroyed
+
+
+def test_source_limit_rejects_before_creating_a_microvm() -> None:
+    box = FakeBox()
+    factory = FakeFactory(box)
+    runner = JavaScriptSandboxRunner(factory)
+
+    with pytest.raises(AdapterExecutionError) as error:
+        run(runner.execute("x" * (10 * 1024 + 1), {"input": None}))
+
+    assert error.value.code == "source_too_large"
+    assert not factory.created
+    assert not box.destroyed
+
+
 def test_cancellation_destroys_the_microvm() -> None:
     class BlockingBox(FakeBox):
         async def run_process(self, command: str, args: list[str], **kwargs: Any) -> Completed:
@@ -193,3 +252,44 @@ def test_vercel_factory_fails_closed_without_sandbox_credentials(
         run(VercelSandboxFactory().create())
 
     assert error.value.code == "sandbox_unavailable"
+
+
+def test_vercel_factory_creates_a_fresh_air_gapped_microvm(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+    box = FakeBox()
+
+    async def create_sandbox(**kwargs: Any) -> FakeBox:
+        captured.update(kwargs)
+        return box
+
+    monkeypatch.setenv("VERCEL_OIDC_TOKEN", "test-token-not-used")
+    monkeypatch.setattr(sandbox_javascript.sandbox, "create_sandbox", create_sandbox)
+
+    assert run(VercelSandboxFactory().create()) is box
+    assert captured["execution_time_limit"] == 5
+    assert captured["persistent"] is False
+    assert captured["env"] == {}
+    assert captured["tags"] == {"workload": "nodeflow-javascript"}
+    assert captured["network_policy"].mode == "deny-all"
+    assert captured["resources"].vcpus == 1
+    assert captured["resources"].memory == 2048
+
+
+def test_vercel_factory_maps_sdk_failures_to_a_safe_recoverable_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def create_sandbox(**_: Any) -> FakeBox:
+        raise RuntimeError("provider details must not reach the client")
+
+    monkeypatch.setenv("VERCEL_OIDC_TOKEN", "test-token-not-used")
+    monkeypatch.setattr(sandbox_javascript.sandbox, "create_sandbox", create_sandbox)
+
+    with pytest.raises(AdapterExecutionError) as error:
+        run(VercelSandboxFactory().create())
+
+    assert error.value.code == "sandbox_unavailable"
+    assert (
+        error.value.message == "JavaScript execution is temporarily unavailable; try again later."
+    )
