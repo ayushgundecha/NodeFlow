@@ -102,6 +102,14 @@ export function NodeInspector({ busy, collapsed, events, onToggle, validationIss
   const updateNodeConfig = useStore((state) => state.updateNodeConfig);
   const [viewState, setViewState] = useState<{ nodeId: string | null; view: InspectorView }>({ nodeId: null, view: "configure" });
   const details = useMemo(() => detailsForNode(events, node?.id ?? null), [events, node?.id]);
+  const inspectorDetails = useMemo(() => {
+    if (node?.data.nodeType !== "output" || details.output !== null && details.output !== undefined) return details;
+    const label = node.data.config?.label;
+    const completed = [...events].reverse().find((event) => event.type === "run.completed");
+    const completedOutputs = completed?.outputs;
+    if (typeof label !== "string" || !completedOutputs || !Object.prototype.hasOwnProperty.call(completedOutputs, label)) return details;
+    return { ...details, output: completedOutputs[label] };
+  }, [details, events, node]);
   const view = viewState.nodeId === node?.id ? viewState.view : "configure";
 
   if (collapsed) return null;
@@ -128,7 +136,7 @@ export function NodeInspector({ busy, collapsed, events, onToggle, validationIss
         <div className="nf-selected-node"><span className={`nf-node-tone--${definition.category}`}><Icon aria-hidden="true" size={18} /></span><div><small>{nodeCategoryLabels[definition.category]}</small><strong>{node.data.label ?? definition.label}</strong></div></div>
         {view === "configure" ? <>{validationIssues.filter((issue) => issue.nodeId === node.id).map((issue) => <div className="nf-inspector-runtime-error" key={`${issue.code}.${issue.field}`} role="alert"><strong>{issue.code.replaceAll("_", " ")}</strong><span>{issue.message}</span></div>)}
           <label className="nf-shell-field"><span>Node name<em aria-hidden="true">Required</em></span><input aria-label="Node name" onChange={(event) => updateNodeField(node.id, "label", event.target.value)} required type="text" value={node.data.label ?? ""} /><small>Shown on the canvas and in run traces.</small></label>
-          {definition.fields.map((field) => <InspectorField field={field} initialValue={node.data.config?.[field.key]} key={`${node.id}.${field.key}`} onCommit={(value) => updateNodeConfig(node.id, field.key, value)} />)}</> : <InspectorRunData busy={busy} details={details} eventsAvailable={events.length > 0} nodeId={node.data.label ?? node.id} view={view} />}
+          {definition.fields.map((field) => <InspectorField field={field} initialValue={node.data.config?.[field.key]} key={`${node.id}.${field.key}`} onCommit={(value) => updateNodeConfig(node.id, field.key, value)} />)}</> : <InspectorRunData busy={busy} details={inspectorDetails} eventsAvailable={events.length > 0} nodeId={node.data.label ?? node.id} view={view} />}
       </div>
       <footer className="nf-panel-footer"><span><CheckCircle2 aria-hidden="true" size={14} /> {view === "configure" ? "Changes save automatically" : "Data comes from the current run"}</span></footer>
     </aside>

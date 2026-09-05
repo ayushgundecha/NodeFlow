@@ -222,7 +222,7 @@ export function WorkspaceShell() {
   };
 
   const update = (next: Partial<PanelLayout>) => setLayout((current) => ({ ...current, ...next }));
-  const showInspector = () => update({ inspectorCollapsed: false, libraryCollapsed: true });
+  const showInspector = () => update({ inspectorCollapsed: false });
   const inspectorVisible = Boolean(selectedNodeId) && !layout.inspectorCollapsed;
   const style = {
     '--nf-debugger-height': layout.debuggerCollapsed ? '0px' : `${layout.debuggerHeight}px`,
@@ -238,7 +238,7 @@ export function WorkspaceShell() {
         <p aria-atomic="true" className="nf-visually-hidden" role="status">{runtime.statusMessage}</p>
         <div className="nf-workflow-content" id="workflow-content" tabIndex={-1}>
           {compactViewer ? <ResponsiveReadOnlyViewer description={workspaceMeta.description} name={workspaceMeta.name} nodeStatuses={runtime.nodeStatuses} nodes={nodes} /> : <main className="nf-workbench" style={style}>
-          <NodeLibrary collapsed={layout.libraryCollapsed} onNodeAdded={showInspector} onToggle={() => update(layout.libraryCollapsed ? { inspectorCollapsed: true, libraryCollapsed: false } : { libraryCollapsed: true })} />
+          <NodeLibrary collapsed={layout.libraryCollapsed} onNodeAdded={showInspector} onToggle={() => update({ libraryCollapsed: !layout.libraryCollapsed })} />
           {layout.libraryCollapsed ? null : <ResizeHandle ariaLabel="Resize node library" axis="x" current={layout.libraryWidth} limits={PANEL_LIMITS.libraryWidth} onChange={(libraryWidth) => update({ libraryWidth })} slot="library" />}
           <div className="nf-canvas-column" id="workflow-canvas" tabIndex={-1}>
             <Profiler id="RegistryWorkflowCanvas" onRender={recordReactRender}><RegistryWorkflowCanvas debuggerCollapsed={layout.debuggerCollapsed} description={workspaceMeta.description} exampleOutcome={activeTemplate?.outcome} libraryCollapsed={layout.libraryCollapsed} nodeStatuses={displayedNodeStatuses} onShowDebugger={() => update({ debuggerCollapsed: false })} onShowLibrary={() => update({ libraryCollapsed: false })} inspectorCollapsed={!inspectorVisible} onShowInspector={showInspector} validationIssues={runtime.validationIssues} workflowName={workspaceMeta.name} /></Profiler>

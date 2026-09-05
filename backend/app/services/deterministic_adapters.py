@@ -277,8 +277,10 @@ class OutputAdapter:
     ) -> NodeExecutionResult:
         if not isinstance(node, OutputNode):
             raise AdapterExecutionError("adapter_mismatch", "Output adapter received wrong node.")
-        _validated(context.first_input("value"))
-        return NodeExecutionResult()
+        value = _validated(context.first_input("value"))
+        # Output nodes are terminal sinks, but their completion event still needs
+        # to carry the captured value so the inspector can show the real result.
+        return NodeExecutionResult(outputs={"value": value})
 
 
 def deterministic_adapters() -> Mapping[str, NodeAdapter]:

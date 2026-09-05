@@ -4,6 +4,14 @@ import { getNodeDefinition } from "../../domain/nodes/registry";
 import type { FlowEdge, FlowNode } from "../../types/editor";
 
 export const NODEFLOW_DRAG_TYPE = "application/nodeflow";
+export const NODE_CARD_SIZE = { width: 216, height: 108 } as const;
+
+export function centerDroppedNode(position: { x: number; y: number }) {
+  return {
+    x: position.x - NODE_CARD_SIZE.width / 2,
+    y: position.y - NODE_CARD_SIZE.height / 2,
+  };
+}
 
 export function workflowNodePosition(index: number) {
   return { x: 72 + index * 260, y: 220 };

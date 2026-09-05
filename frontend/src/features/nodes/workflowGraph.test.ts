@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { createLibraryNode, canConnectNodes, layoutWorkflowNodes, workflowNodePosition } from "./workflowGraph";
+import { centerDroppedNode, createLibraryNode, canConnectNodes, layoutWorkflowNodes, workflowNodePosition } from "./workflowGraph";
 
 describe("workflow graph helpers", () => {
   it("creates configured registry nodes for a blank canvas", () => {
     const node = createLibraryNode("condition", "condition-1", { x: 120, y: 80 });
     expect(node.data).toMatchObject({ id: "condition-1", nodeType: "condition", label: "Condition" });
     expect(node.position).toEqual({ x: 120, y: 80 });
+  });
+
+  it("centers a dragged node on the pointer drop position", () => {
+    expect(centerDroppedNode({ x: 500, y: 300 })).toEqual({ x: 392, y: 246 });
   });
 
   it("only allows compatible, non-duplicate port connections", () => {

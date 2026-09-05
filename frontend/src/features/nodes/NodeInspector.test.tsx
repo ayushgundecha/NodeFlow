@@ -35,4 +35,18 @@ describe("NodeInspector", () => {
     fireEvent.click(outputTab);
     expect(screen.getByText(/"severity": "high"/)).toBeInTheDocument();
   });
+
+  it("shows a terminal workflow result for output nodes from older null traces", () => {
+    const outputNode = defaultWorkflowTemplate.nodes.at(-1)!;
+    const outputEvents: RunEvent[] = [
+      { type: "node.completed", runId: "run-1", nodeId: outputNode.id, sequence: 1, occurredAt: "2026-09-03T10:00:00.025Z", output: null, durationMs: 2 },
+      { type: "run.completed", runId: "run-1", sequence: 2, occurredAt: "2026-09-03T10:00:00.030Z", outputs: { incidentBrief: { summary: "Recovered final value" } }, durationMs: 30 },
+    ];
+    useStore.getState().hydrateWorkflow([outputNode], []);
+    useEditorStore.getState().selectNode(outputNode.id);
+    render(<NodeInspector busy={false} collapsed={false} events={outputEvents} onToggle={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "output" }));
+    expect(screen.getByText(/"summary": "Recovered final value"/)).toBeInTheDocument();
+  });
 });

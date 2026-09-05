@@ -1,4 +1,4 @@
-import { Maximize2, PanelBottomOpen, ZoomIn, ZoomOut } from "lucide-react";
+import { Maximize2, Move, PanelBottomOpen, ZoomIn, ZoomOut } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import ReactFlow, { Background, ConnectionLineType, type Connection, type NodeProps, type NodeTypes, type ReactFlowInstance } from "reactflow";
 import "reactflow/dist/style.css";
@@ -9,7 +9,7 @@ import type { RuntimeNodeStatus } from "../runtime/useWorkflowRuntime";
 import type { ValidationIssue } from "../../contracts/types";
 import { CompactNodeCard, type ActivePort } from "./CompactNodeCard";
 import { EditorCommandBar } from "./EditorCommandBar";
-import { NODEFLOW_DRAG_TYPE, canConnectNodes, createLibraryNode } from "./workflowGraph";
+import { NODEFLOW_DRAG_TYPE, canConnectNodes, centerDroppedNode, createLibraryNode } from "./workflowGraph";
 
 interface RegistryWorkflowCanvasProps {
   debuggerCollapsed: boolean;
@@ -56,8 +56,10 @@ export function RegistryWorkflowCanvas({ debuggerCollapsed, description, example
   const selectNode = useEditorStore((state) => state.selectNode);
   const toggleNodeSelection = useEditorStore((state) => state.toggleNodeSelection);
   const [activePort, setActivePort] = useState<ActivePort>(null);
+  const [dropActive, setDropActive] = useState(false);
   const [zoom, setZoom] = useState(100);
   const reactFlow = useRef<ReactFlowInstance | null>(null);
+  const canvasStage = useRef<HTMLDivElement | null>(null);
   const fitView = useCallback(() => {
     const instance = reactFlow.current;
     if (!instance) return;
@@ -108,9 +110,12 @@ export function RegistryWorkflowCanvas({ debuggerCollapsed, description, example
   }, [edges, nodes, onConnect]);
   const dropNode = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    setDropActive(false);
     const type = event.dataTransfer.getData(NODEFLOW_DRAG_TYPE) || event.dataTransfer.getData("text/plain");
-    if (!type || !reactFlow.current) return;
-    createNodeAt(type, reactFlow.current.project({ x: event.clientX, y: event.clientY }));
+    const bounds = canvasStage.current?.getBoundingClientRect();
+    if (!type || !reactFlow.current || !bounds) return;
+    const canvasPosition = reactFlow.current.project({ x: event.clientX - bounds.left, y: event.clientY - bounds.top });
+    createNodeAt(type, centerDroppedNode(canvasPosition));
   }, [createNodeAt]);
 
   return (
@@ -127,7 +132,7 @@ export function RegistryWorkflowCanvas({ debuggerCollapsed, description, example
           {debuggerCollapsed ? <CanvasIconButton icon={PanelBottomOpen} label="Open run debugger" onClick={onShowDebugger} /> : null}
         </div>
       </div>
-      <div className="nf-canvas-stage">
+      <div className={`nf-canvas-stage${dropActive ? " nf-canvas-stage--drop-active" : ""}`} ref={canvasStage}>
         <ReactFlow
           className="nf-react-flow"
           connectionLineStyle={{ stroke: "var(--nf-color-action)", strokeWidth: 1.75 }}
@@ -139,7 +144,9 @@ export function RegistryWorkflowCanvas({ debuggerCollapsed, description, example
           nodeTypes={nodeTypes}
           nodes={flowNodes}
           onConnect={connect}
-          onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }}
+          onDragEnter={(event) => { if (event.dataTransfer.types.includes(NODEFLOW_DRAG_TYPE)) setDropActive(true); }}
+          onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropActive(false); }}
+          onDragOver={(event) => { if (!event.dataTransfer.types.includes(NODEFLOW_DRAG_TYPE)) return; event.preventDefault(); event.dataTransfer.dropEffect = "copy"; setDropActive(true); }}
           onDrop={dropNode}
           onEdgesChange={onEdgesChange}
           onInit={(instance) => { reactFlow.current = instance; window.requestAnimationFrame(fitView); }}
@@ -151,6 +158,7 @@ export function RegistryWorkflowCanvas({ debuggerCollapsed, description, example
         >
           <Background gap={20} size={1} />
         </ReactFlow>
+        {dropActive ? <div className="nf-canvas-drop-hint" role="status"><Move aria-hidden="true" size={18} /><span><strong>Drop node on canvas</strong><small>It will be placed at this position.</small></span></div> : null}
         {validationIssues.length ? <div className="nf-validation-summary" id="validation-summary" role="alert" tabIndex={-1}><strong>Run blocked · {validationIssues.length} {validationIssues.length === 1 ? "issue" : "issues"}</strong><span>{validationIssues[0]!.message}</span></div> : null}
         <div className="nf-canvas-command-dock"><EditorCommandBar /></div>
         {!nodes.length ? <div className="nf-canvas-empty"><strong>Start your workflow here</strong><span>Drag a node from the library, or click one to add it and open its settings.</span><button className="nf-button nf-button--secondary" onClick={() => onShowLibrary()} type="button">Open node library</button></div> : null}

@@ -1,4 +1,4 @@
-import { Box, Circle, PanelLeftClose, PanelLeftOpen, Plus, Search } from "lucide-react";
+import { Box, Circle, GripVertical, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { nodeDefinitions, type NodeCategory } from "../../domain/nodes/registry";
 import { useEditorStore } from "../editor/editorStore";
@@ -68,6 +68,7 @@ export function NodeLibrary({ collapsed, onNodeAdded, onToggle }: NodeLibraryPro
         <input onChange={(event) => setQuery(event.target.value)} placeholder="Search 10 node types" type="search" value={query} />
         <kbd>⌘K</kbd>
       </label>
+      <p className="nf-library-hint" id="node-library-hint"><GripVertical aria-hidden="true" size={13} /> Drag to place · click to add</p>
       <div aria-live="polite" className="nf-library-section">
         {filteredGroups.length ? filteredGroups.map(([category, definitions]) => (
           <section className="nf-library-group" key={category}>
@@ -76,10 +77,10 @@ export function NodeLibrary({ collapsed, onNodeAdded, onToggle }: NodeLibraryPro
               {definitions.map((definition) => {
                 const Icon = nodeIcons[definition.icon];
                 return (
-                  <button aria-label={`Add ${definition.label} node`} className="nf-library-item" draggable key={definition.type} onClick={() => insertNode(definition.type)} onDragStart={(event) => { event.dataTransfer.effectAllowed = "copy"; event.dataTransfer.setData(NODEFLOW_DRAG_TYPE, definition.type); event.dataTransfer.setData("text/plain", definition.type); }} type="button">
+                  <button aria-describedby="node-library-hint" aria-label={`Add ${definition.label} node`} className="nf-library-item" draggable key={definition.type} onClick={() => insertNode(definition.type)} onDragStart={(event) => { event.dataTransfer.effectAllowed = "copy"; event.dataTransfer.setData(NODEFLOW_DRAG_TYPE, definition.type); event.dataTransfer.setData("text/plain", definition.type); }} title={`Drag ${definition.label} to the canvas, or click to add`} type="button">
                     <span className={`nf-library-item__icon nf-node-tone--${definition.category}`}><Icon aria-hidden="true" size={17} /></span>
                     <span><strong>{definition.label}</strong><small>{definition.description}</small></span>
-                    <Plus aria-hidden="true" size={16} />
+                    <GripVertical aria-hidden="true" size={16} />
                   </button>
                 );
               })}

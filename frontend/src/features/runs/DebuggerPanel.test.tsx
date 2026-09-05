@@ -7,11 +7,12 @@ const events: RunEvent[] = [
   { type: "run.started", runId: "run-1", clientRunId: "client-1", sequence: 0, occurredAt: "2026-09-03T10:00:00.000Z" },
   { type: "node.started", runId: "run-1", nodeId: "fetch", sequence: 1, occurredAt: "2026-09-03T10:00:00.005Z", input: { id: 42 } },
   { type: "node.completed", runId: "run-1", nodeId: "fetch", sequence: 2, occurredAt: "2026-09-03T10:00:00.025Z", output: { ok: true }, durationMs: 20 },
-  { type: "run.completed", runId: "run-1", sequence: 3, occurredAt: "2026-09-03T10:00:00.030Z", outputs: { fetch: { ok: true } }, durationMs: 30 },
+  { type: "node.completed", runId: "run-1", nodeId: "publish", sequence: 3, occurredAt: "2026-09-03T10:00:00.027Z", output: null, durationMs: 2 },
+  { type: "run.completed", runId: "run-1", sequence: 4, occurredAt: "2026-09-03T10:00:00.030Z", outputs: { finalResult: { ok: true, source: "terminal" } }, durationMs: 30 },
 ];
 
 const renderPanel = (onInspectNode = vi.fn()) => {
-  render(<DebuggerPanel busy={false} collapsed={false} events={events} historyAvailable nodeLabels={{ fetch: "Fetch customer" }} onClearHistory={vi.fn()} onInspectNode={onInspectNode} onReplayEvents={vi.fn()} onRun={vi.fn()} onStop={vi.fn()} onToggle={vi.fn()} retryable={false} statusMessage="Complete" traces={[]} workflowFormat="nodeflow.workflow/2" workflowId="test" workflowSignature="signature" />);
+  render(<DebuggerPanel busy={false} collapsed={false} events={events} historyAvailable nodeLabels={{ fetch: "Fetch customer", publish: "Publish result" }} onClearHistory={vi.fn()} onInspectNode={onInspectNode} onReplayEvents={vi.fn()} onRun={vi.fn()} onStop={vi.fn()} onToggle={vi.fn()} retryable={false} statusMessage="Complete" traces={[]} workflowFormat="nodeflow.workflow/2" workflowId="test" workflowSignature="signature" />);
   return onInspectNode;
 };
 
@@ -21,7 +22,7 @@ describe("DebuggerPanel", () => {
   it("renders events in server sequence and synchronizes node selection", () => {
     const inspect = renderPanel();
     const eventButtons = within(screen.getByRole("list", { name: "Run events in server order" })).getAllByRole("button");
-    expect(eventButtons.map((button) => button.textContent?.slice(0, 3))).toEqual(["000", "001", "002", "003"]);
+    expect(eventButtons.map((button) => button.textContent?.slice(0, 3))).toEqual(["000", "001", "002", "003", "004"]);
     fireEvent.click(screen.getByRole("button", { name: /001StartedFetch customer/i }));
     expect(inspect).toHaveBeenCalledWith("fetch");
   });
@@ -41,8 +42,8 @@ describe("DebuggerPanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "View final output" }));
 
-    expect(inspect).toHaveBeenCalledWith("fetch");
-    expect(screen.getByText(/"ok": true/)).toBeInTheDocument();
+    expect(inspect).toHaveBeenCalledWith("publish");
+    expect(screen.getByText(/"source": "terminal"/)).toBeInTheDocument();
   });
 
   it("labels a disconnected partial run as interrupted instead of running", () => {

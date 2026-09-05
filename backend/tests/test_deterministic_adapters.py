@@ -146,6 +146,8 @@ def test_delay_is_bounded_and_output_validates_json_limits() -> None:
         make_node("delay", {"milliseconds": 30_001})
 
     output = make_node("output", {"label": "Result", "format": "json"})
+    captured = execute(OutputAdapter(), output, inputs={"value": ({"ok": True},)})
+    assert captured.outputs == {"value": {"ok": True}}
     with pytest.raises(AdapterExecutionError) as error:
         execute(OutputAdapter(), output, inputs={"value": ("x" * (257 * 1024),)})
     assert error.value.code == "output_invalid"

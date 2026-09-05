@@ -103,6 +103,7 @@ export function DebuggerPanel({ busy, collapsed, events: liveEvents, historyAvai
   const details = detailsForNode(events, selectedNodeId);
   const summary = summarizeRun(events);
   const finalNodeEvent = [...events].reverse().find((event) => event.type === "node.completed");
+  const completedRunEvent = [...events].reverse().find((event) => event.type === "run.completed");
   const failedNodeEvent = [...events].reverse().find((event) => event.type === "node.failed");
   const timings = runTimings(events);
   const maxEnd = Math.max(1, ...timings.map((timing) => timing.offsetMs + timing.durationMs));
@@ -141,7 +142,8 @@ export function DebuggerPanel({ busy, collapsed, events: liveEvents, historyAvai
 
   const hasEvents = events.length > 0;
   const interrupted = !busy && retryable && summary.status === "running";
-  const selectedLabel = selectedNodeId ? nodeLabels[selectedNodeId] ?? selectedNodeId : "Workflow";
+  const workflowOutputSelected = selectedEvent?.type === "run.completed";
+  const selectedLabel = workflowOutputSelected ? "Workflow output" : selectedNodeId ? nodeLabels[selectedNodeId] ?? selectedNodeId : "Workflow";
   return (
     <section aria-labelledby="debugger-title" className="nf-debugger" hidden={collapsed}>
       <header className="nf-debugger__header">
@@ -164,7 +166,7 @@ export function DebuggerPanel({ busy, collapsed, events: liveEvents, historyAvai
           <span><strong>{summary.failed}</strong>Failed</span>
           <span><strong>{summary.skipped}</strong>Skipped</span>
         </div>
-        {summary.status === "completed" && finalNodeEvent ? <div className="nf-run-outcome" role="status"><CheckCircle2 aria-hidden="true" size={17} /><span><strong>Workflow completed</strong><small>Your final result is ready in {nodeLabels[finalNodeEvent.nodeId] ?? finalNodeEvent.nodeId}.</small></span><button onClick={() => { selectEvent(finalNodeEvent); showData("output"); }} type="button">View final output</button></div> : null}
+        {summary.status === "completed" && finalNodeEvent && completedRunEvent ? <div className="nf-run-outcome" role="status"><CheckCircle2 aria-hidden="true" size={17} /><span><strong>Workflow completed</strong><small>Your final result is ready in {nodeLabels[finalNodeEvent.nodeId] ?? finalNodeEvent.nodeId}.</small></span><button onClick={() => { setSelectedSequence(completedRunEvent.sequence); onInspectNode(finalNodeEvent.nodeId); showData("output"); }} type="button">View final output</button></div> : null}
         {summary.status === "failed" && failedNodeEvent ? <div className="nf-run-outcome nf-run-outcome--failed" role="alert"><AlertCircle aria-hidden="true" size={17} /><span><strong>Workflow stopped at {nodeLabels[failedNodeEvent.nodeId] ?? failedNodeEvent.nodeId}</strong><small>{failedNodeEvent.error.message}</small></span><button onClick={() => { selectEvent(failedNodeEvent); showData("error"); }} type="button">View error</button></div> : null}
         {interrupted ? <div className="nf-run-outcome nf-run-outcome--failed" role="alert"><AlertCircle aria-hidden="true" size={17} /><span><strong>Run connection interrupted</strong><small>{statusMessage}</small></span><button onClick={onRun} type="button">Retry run</button></div> : null}
         <ol className="nf-debugger__timeline" aria-label="Run events in server order">
@@ -178,13 +180,13 @@ export function DebuggerPanel({ busy, collapsed, events: liveEvents, historyAvai
       </div> : null}
       {hasEvents && view === "data" ? <div aria-labelledby="debugger-tab-data" className="nf-debugger__body nf-debugger__body--data" id="debugger-data" role="tabpanel">
         <aside className="nf-debug-data-nav">
-          <div><FileJson2 aria-hidden="true" size={16} /><span><small>Selected node</small><strong>{selectedLabel}</strong></span></div>
+          <div><FileJson2 aria-hidden="true" size={16} /><span><small>{workflowOutputSelected ? "Completed run" : "Selected node"}</small><strong>{selectedLabel}</strong></span></div>
           <div role="tablist" aria-label="Selected node data">
-            {(["input", "output", "logs", "error"] as const).map((item) => <button aria-selected={dataView === item} key={item} onClick={() => setDataView(item)} role="tab" type="button">{item}<span>{item === "logs" ? details.logs.length : item === "error" && details.error ? 1 : ""}</span></button>)}
+            {(workflowOutputSelected ? ["output"] as const : ["input", "output", "logs", "error"] as const).map((item) => <button aria-selected={dataView === item} key={item} onClick={() => setDataView(item)} role="tab" type="button">{item}<span>{item === "logs" ? details.logs.length : item === "error" && details.error ? 1 : ""}</span></button>)}
           </div>
         </aside>
         <div className="nf-debug-data-panel" role="tabpanel">
-          {!selectedNodeId ? <div className="nf-debug-empty-value">Select a node event in the timeline to inspect its real data.</div> : dataView === "input" ? <DataValue filename={`${selectedNodeId}-input.json`} label="Input" value={details.input} /> : dataView === "output" ? <DataValue filename={`${selectedNodeId}-output.json`} label="Output" value={details.output} /> : dataView === "logs" ? details.logs.length ? <ol className="nf-debug-logs">{details.logs.map((log, index) => <li key={`${index}.${log.stream}`}><span>{log.stream}</span><code>{log.message}</code>{log.truncated ? <em>truncated</em> : null}</li>)}</ol> : <div className="nf-debug-empty-value">No logs were emitted by this node.</div> : details.error ? <div className="nf-debug-error"><AlertCircle aria-hidden="true" size={18} /><span><strong>{details.error.code.replaceAll("_", " ")}</strong><p>{details.error.message}</p><small>{details.error.retryable ? "This error is safe to retry." : "This run cannot succeed unchanged. Use the message above to resolve the cause before running again."}</small></span></div> : <div className="nf-debug-empty-value">No error was recorded for this node.</div>}
+          {workflowOutputSelected ? <DataValue filename={`${workflowId}-output.json`} label="Workflow output" value={completedRunEvent?.outputs} /> : !selectedNodeId ? <div className="nf-debug-empty-value">Select a node event in the timeline to inspect its real data.</div> : dataView === "input" ? <DataValue filename={`${selectedNodeId}-input.json`} label="Input" value={details.input} /> : dataView === "output" ? <DataValue filename={`${selectedNodeId}-output.json`} label="Output" value={details.output} /> : dataView === "logs" ? details.logs.length ? <ol className="nf-debug-logs">{details.logs.map((log, index) => <li key={`${index}.${log.stream}`}><span>{log.stream}</span><code>{log.message}</code>{log.truncated ? <em>truncated</em> : null}</li>)}</ol> : <div className="nf-debug-empty-value">No logs were emitted by this node.</div> : details.error ? <div className="nf-debug-error"><AlertCircle aria-hidden="true" size={18} /><span><strong>{details.error.code.replaceAll("_", " ")}</strong><p>{details.error.message}</p><small>{details.error.retryable ? "This error is safe to retry." : "This run cannot succeed unchanged. Use the message above to resolve the cause before running again."}</small></span></div> : <div className="nf-debug-empty-value">No error was recorded for this node.</div>}
         </div>
       </div> : null}
       {hasEvents && view === "timing" ? <div aria-labelledby="debugger-tab-timing" className="nf-debugger__body nf-debugger__body--timing" id="debugger-timing" role="tabpanel">

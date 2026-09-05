@@ -74,11 +74,13 @@
 .nf-shell-search:focus-within { border-color: var(--nf-color-focus); box-shadow: var(--nf-focus-ring); }
 .nf-shell-search input { min-width: 0; min-height: 38px; flex: 1; border: 0; outline: 0; color: var(--nf-color-foreground); background: transparent; font-size: var(--nf-text-sm); }
 .nf-shell-search kbd { padding: 2px 5px; border: 1px solid var(--nf-color-border); border-radius: var(--nf-radius-sm); color: var(--nf-color-foreground-muted); background: var(--nf-color-workspace); font: 10px var(--nf-font-sans); }
+.nf-library-hint { display: flex; align-items: center; gap: var(--nf-space-1); margin: calc(-1 * var(--nf-space-1)) var(--nf-space-3) var(--nf-space-2); color: var(--nf-color-foreground-muted); font-size: 10px; }
 .nf-library-section { min-height: 0; flex: 1; overflow-y: auto; padding: 0 var(--nf-space-2) var(--nf-space-3); }
 .nf-library-section__heading { display: flex; align-items: center; justify-content: space-between; padding: var(--nf-space-2); color: var(--nf-color-foreground-muted); font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 .nf-library-list { display: grid; gap: var(--nf-space-1); }
 .nf-library-item { min-height: 58px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--nf-space-2); padding: var(--nf-space-2); border: 1px solid transparent; border-radius: var(--nf-radius-md); color: var(--nf-color-foreground); background: transparent; text-align: left; cursor: pointer; transition: border-color var(--nf-duration-fast) var(--nf-ease-standard), background-color var(--nf-duration-fast) var(--nf-ease-standard); }
 .nf-library-item:hover { border-color: var(--nf-color-border); background: var(--nf-color-workspace); }
+.nf-library-item:active { cursor: grabbing; }
 .nf-library-item__icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: var(--nf-radius-md); color: var(--nf-color-brand); background: var(--nf-color-brand-soft); }
 .nf-library-item strong, .nf-library-item small { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nf-library-item strong { font-size: var(--nf-text-sm); }
@@ -124,6 +126,11 @@
 .nf-shell-badge--completed { border-color: var(--nf-color-success-border); color: var(--nf-color-success); background: var(--nf-color-success-soft); }
 .nf-shell-badge--failed { border-color: var(--nf-color-danger-border); color: var(--nf-color-danger); background: var(--nf-color-danger-soft); }
 .nf-canvas-stage { position: absolute; inset: 52px 0 0; z-index: 1; min-height: 0; overflow: hidden; }
+.nf-canvas-stage--drop-active::after { content: ''; position: absolute; inset: var(--nf-space-2); z-index: 5; pointer-events: none; border: 2px dashed var(--nf-color-action); border-radius: var(--nf-radius-lg); background: color-mix(in srgb, var(--nf-color-action-soft) 45%, transparent); }
+.nf-canvas-drop-hint { position: absolute; top: var(--nf-space-4); left: 50%; z-index: 6; display: flex; align-items: center; gap: var(--nf-space-2); padding: var(--nf-space-2) var(--nf-space-3); pointer-events: none; transform: translateX(-50%); border: 1px solid var(--nf-color-action); border-radius: var(--nf-radius-md); color: var(--nf-color-action); background: var(--nf-color-surface); box-shadow: var(--nf-shadow-md); }
+.nf-canvas-drop-hint span, .nf-canvas-drop-hint strong, .nf-canvas-drop-hint small { display: block; }
+.nf-canvas-drop-hint strong { font-size: var(--nf-text-xs); }
+.nf-canvas-drop-hint small { margin-top: 1px; color: var(--nf-color-foreground-muted); font-size: 10px; }
 .nf-react-flow { width: 100%; height: 100%; min-height: 0; }
 .nf-react-flow .react-flow__controls, .nf-react-flow .react-flow__minimap { border: 1px solid var(--nf-color-border); border-radius: var(--nf-radius-md); box-shadow: var(--nf-shadow-sm); }
 .nf-react-flow .react-flow__controls-button { border-bottom-color: var(--nf-color-border-subtle); color: var(--nf-color-foreground-soft); background: var(--nf-color-surface); }
@@ -141,8 +148,8 @@
 .nf-editor-commandbar button { min-height: 32px; display: inline-flex; align-items: center; gap: var(--nf-space-1); padding: 0 var(--nf-space-2); border: 0; border-radius: var(--nf-radius-sm); color: var(--nf-color-foreground-soft); background: transparent; font-size: 10px; font-weight: 700; cursor: pointer; }
 .nf-editor-commandbar button:hover:not(:disabled) { color: var(--nf-color-action); background: var(--nf-color-action-soft); }
 .nf-editor-commandbar button:disabled { opacity: .42; cursor: not-allowed; }
-.nf-command-dialog { position: fixed; inset: 0; z-index: var(--nf-z-dialog); display: grid; place-items: start center; padding-top: min(18vh, 160px); background: var(--nf-color-scrim); }
-.nf-command-dialog > div { width: min(440px, calc(100vw - 32px)); display: grid; gap: var(--nf-space-1); padding: var(--nf-space-2); border: 1px solid var(--nf-color-border); border-radius: var(--nf-radius-lg); background: var(--nf-color-surface); box-shadow: var(--nf-shadow-lg); }
+.nf-command-dialog { position: fixed; inset: 0; z-index: var(--nf-z-dialog); display: grid; place-items: start center; padding: min(18vh, 160px) var(--nf-space-4) var(--nf-space-4); background: var(--nf-color-scrim); }
+.nf-command-dialog__panel { width: min(440px, 100%); display: grid; gap: var(--nf-space-1); padding: var(--nf-space-2); border: 1px solid var(--nf-color-border); border-radius: var(--nf-radius-lg); background: var(--nf-color-surface); box-shadow: var(--nf-shadow-lg); }
 .nf-command-dialog header { min-height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 var(--nf-space-2); }
 .nf-command-dialog header button { width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: var(--nf-radius-md); background: transparent; cursor: pointer; }
 .nf-command-dialog > div > button { min-height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 var(--nf-space-3); border: 0; border-radius: var(--nf-radius-md); color: var(--nf-color-foreground); background: var(--nf-color-workspace); text-align: left; cursor: pointer; }
