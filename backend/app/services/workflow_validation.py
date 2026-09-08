@@ -168,6 +168,10 @@ def validate_workflow(workflow: WorkflowDefinition) -> ValidationResult:
     """Validate without mutating the submitted definition and return a stable result."""
 
     issues: list[ValidationIssue] = []
+    if not workflow.nodes:
+        issues.append(
+            _issue("graph_empty", "Add a node before running this workflow.", field="nodes")
+        )
     node_counts = Counter(node.id for node in workflow.nodes)
     edge_id_counts = Counter(edge.id for edge in workflow.edges)
     nodes = {node.id: node for node in workflow.nodes}

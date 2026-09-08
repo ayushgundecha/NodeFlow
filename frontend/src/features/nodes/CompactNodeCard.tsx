@@ -65,7 +65,7 @@ export function CompactNodeCard({ activePort, node, onPortChange, onSelect, sele
         type="button"
       ><span>{port.label}</span><small>{port.dataType}</small></button>
       <Handle
-        aria-label={`Drag ${port.label} ${port.direction} port`}
+        aria-hidden="true"
         className={`nf-react-flow-handle nf-react-flow-handle--${port.direction} nf-react-flow-handle--${port.dataType} nf-react-flow-handle--${mode}`}
         id={port.id}
         position={port.direction === "input" ? Position.Left : Position.Right}

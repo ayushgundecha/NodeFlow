@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { RunEvent } from "../../contracts/types";
 import { createEditorWorkspace } from "../editor/workspacePersistence";
-import { compareRuns, makeStoredTrace, replayEventsThrough, traceCompatibility, workflowSignature } from "./runHistory";
+import { isStoredTrace, compareRuns, makeStoredTrace, replayEventsThrough, traceCompatibility, workflowSignature } from "./runHistory";
 
 const workspace = createEditorWorkspace({
   description: "Test",
@@ -20,6 +20,14 @@ const completedEvents = (runId: string, durationMs: number, output: unknown): Ru
 ];
 
 describe("local run history", () => {
+  it("rejects damaged records and mixed run ownership before replay", () => {
+    const trace = makeStoredTrace(completedEvents("run-1", 8, true), workspace)!;
+    expect(isStoredTrace(trace)).toBe(true);
+    expect(isStoredTrace(null)).toBe(false);
+    expect(isStoredTrace({ ...trace, events: [null] })).toBe(false);
+    expect(isStoredTrace({ ...trace, runId: "other" })).toBe(false);
+    expect(isStoredTrace({ ...trace, completedAt: {} })).toBe(false);
+  });
   it("stores terminal traces with a stable workflow identity", () => {
     const trace = makeStoredTrace(completedEvents("run-1", 8, { ok: true }), workspace);
     expect(trace).toMatchObject({ runId: "run-1", workflowId: "workflow-1", workflowSignature: workflowSignature(workspace) });

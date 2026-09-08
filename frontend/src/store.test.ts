@@ -60,6 +60,27 @@ describe("workflow store", () => {
     expect(useStore.getState().nodes).toHaveLength(1);
   });
 
+  it("keeps layout measurements and selection out of undo history", () => {
+    useStore.getState().hydrateWorkflow([], []);
+    useStore.getState().addNode(node);
+    useStore.getState().onNodesChange([{ id: node.id, type: 'dimensions', dimensions: { width: 216, height: 108 } }, { id: node.id, type: 'select', selected: true }]);
+    useStore.getState().undo();
+    expect(useStore.getState().nodes).toHaveLength(0);
+    useStore.getState().redo();
+    expect(useStore.getState().nodes).toHaveLength(1);
+  });
+
+  it("undoes a whole drag gesture as one edit", () => {
+    useStore.getState().hydrateWorkflow([node], []);
+    const position = { ...node.position };
+    useStore.getState().onNodesChange([{ id: node.id, type: 'position', position: { x: 50, y: 50 }, dragging: true }]);
+    useStore.getState().onNodesChange([{ id: node.id, type: 'position', position: { x: 100, y: 100 }, dragging: true }]);
+    useStore.getState().onNodesChange([{ id: node.id, type: 'position', position: { x: 100, y: 100 }, dragging: false }]);
+    expect(useStore.getState().historyPast).toHaveLength(1);
+    useStore.getState().undo();
+    expect(useStore.getState().nodes[0]?.position).toEqual(position);
+  });
+
   it("duplicates selected subgraphs with collision-free ids", () => {
     const second = { ...node, id: "text-2", data: { ...node.data, id: "text-2" } };
     useStore.setState({ nodeIDs: { text: 2 }, nodes: [node, second], edges: [{ id: "edge-1", source: node.id, target: second.id }] });

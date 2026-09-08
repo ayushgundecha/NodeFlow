@@ -85,6 +85,18 @@ describe("reduceRunEvent", () => {
 });
 
 describe("streamWorkflowRun", () => {
+  it("rejects malformed typed payloads before the debugger can consume them", () => {
+    expect(() => parseRunEvent({ event: null, id: null, data: JSON.stringify({ ...event(1), type: 'node.failed', durationMs: 1, error: null }) })).toThrow(/payload/);
+  });
+
+  it("cancels the response reader when a malformed frame interrupts the run", async () => {
+    const cancel = vi.fn();
+    const body = new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode('data: {bad}\n\n')); }, cancel });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(body)));
+    const state = await streamWorkflowRun({} as RunRequest);
+    expect(state.protocolError).toContain('malformed JSON');
+    expect(cancel).toHaveBeenCalledOnce();
+  });
   it("maps AbortController cancellation to an explicit client state", async () => {
     const controller = new AbortController();
     controller.abort();

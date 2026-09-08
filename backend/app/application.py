@@ -9,7 +9,11 @@ from fastapi.staticfiles import StaticFiles
 
 from .api.v1.router import router as api_v1_router
 from .config import Settings
-from .middleware import ApiRequestSizeLimitMiddleware, VercelRequestHeadersMiddleware
+from .middleware import (
+    ApiRequestSizeLimitMiddleware,
+    SecurityHeadersMiddleware,
+    VercelRequestHeadersMiddleware,
+)
 from .openapi import install_contract_openapi
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -32,6 +36,7 @@ def create_app(settings: Settings) -> FastAPI:
         allow_headers=["Content-Type", "Authorization", "X-Request-ID"],
     )
     app.add_middleware(VercelRequestHeadersMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware)
     app.include_router(api_v1_router)
     app.mount(
         "/assets",

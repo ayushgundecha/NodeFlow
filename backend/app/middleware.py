@@ -10,6 +10,48 @@ from vercel.headers import HeadersContext, headers_from_asgi_scope
 MAX_API_REQUEST_BYTES = 512 * 1024
 
 
+class SecurityHeadersMiddleware:
+    """Apply browser protections to API and locally served production assets."""
+
+    def __init__(self, app: Callable[..., Awaitable[None]]) -> None:
+        self.app = app
+
+    async def __call__(
+        self,
+        scope: dict[str, Any],
+        receive: Callable[[], Awaitable[dict[str, Any]]],
+        send: Callable[[dict[str, Any]], Awaitable[None]],
+    ) -> None:
+        async def secured_send(message: dict[str, Any]) -> None:
+            if message.get("type") == "http.response.start":
+                headers = list(message.get("headers", []))
+                headers.extend(
+                    [
+                        (b"x-content-type-options", b"nosniff"),
+                        (b"x-frame-options", b"DENY"),
+                        (b"referrer-policy", b"no-referrer"),
+                        (b"permissions-policy", b"camera=(), microphone=(), geolocation=()"),
+                    ]
+                )
+                if scope.get("path") not in {"/docs", "/redoc", "/docs/oauth2-redirect"}:
+                    headers.append(
+                        (
+                            b"content-security-policy",
+                            (
+                                b"default-src 'self'; script-src 'self'; "
+                                b"style-src 'self' 'unsafe-inline'; "
+                                b"img-src 'self' data:; font-src 'self'; connect-src 'self'; "
+                                b"object-src 'none'; base-uri 'none'; "
+                                b"frame-ancestors 'none'; form-action 'self'"
+                            ),
+                        )
+                    )
+                message = {**message, "headers": headers}
+            await send(message)
+
+        await self.app(scope, receive, secured_send)
+
+
 class RequestTooLargeError(Exception):
     pass
 

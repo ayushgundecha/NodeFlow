@@ -57,7 +57,7 @@ export function WorkspaceExperience({ currentWorkspace, onClose, onReplace, open
     const anchor = document.createElement("a"); anchor.href = url; anchor.download = `${currentWorkspace.id}.nodeflow.json`; anchor.click(); URL.revokeObjectURL(url);
   };
   const importWorkflow = async (file: File) => {
-    try { replacementOpener.current = fileInput.current; setPending({ kind: "import", workspace: parseEditorWorkspace(await file.text()) }); setImportError(null); }
+    try { if (file.size > 512 * 1024) throw new Error("Workflow files must be smaller than 512 KB."); replacementOpener.current = fileInput.current; setPending({ kind: "import", workspace: parseEditorWorkspace(await file.text()) }); setImportError(null); }
     catch (error) { setImportError(error instanceof Error ? error.message : "This workflow could not be imported."); }
   };
 

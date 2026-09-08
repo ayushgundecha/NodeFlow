@@ -8,6 +8,7 @@ import type { FlowStore } from "./types/editor";
 import { layoutWorkflowNodes } from "./features/nodes/workflowGraph";
 
 const snapshot = (state: Pick<FlowStore, "nodes" | "edges">) => ({ nodes: state.nodes, edges: state.edges });
+let dragStartSnapshot: ReturnType<typeof snapshot> | null = null;
 const withHistory = (state: FlowStore, next: Partial<Pick<FlowStore, "nodes" | "edges">>) => ({
   ...next,
   historyPast: [...state.historyPast.slice(-49), snapshot(state)],
@@ -31,6 +32,7 @@ export const useStore = create<FlowStore>((set, get) => ({
     set((state) => withHistory(state, { nodes: [...state.nodes, node] }));
   },
   hydrateWorkflow: (nodes, edges) => {
+    dragStartSnapshot = null;
     const nodeIDs = nodes.reduce<Record<string, number>>((sequences, node) => {
       const type = node.data.nodeType;
       sequences[type] = Math.max(sequences[type] ?? 0, Number.parseInt(node.id.split("-").at(-1) ?? "0", 10) || 0);
@@ -47,10 +49,26 @@ export const useStore = create<FlowStore>((set, get) => ({
     }));
   },
   onNodesChange: (changes) => {
-    set((state) => withHistory(state, { nodes: applyNodeChanges(changes, state.nodes) }));
+    set((state) => {
+      const nodes = applyNodeChanges(changes, state.nodes);
+      if (changes.every((change) => change.type === 'dimensions' || change.type === 'select')) return { nodes };
+      if (changes.some((change) => change.type === 'position' && change.dragging)) {
+        dragStartSnapshot ??= snapshot(state);
+        return { nodes };
+      }
+      if (dragStartSnapshot) {
+        const previous = dragStartSnapshot;
+        dragStartSnapshot = null;
+        return { nodes, historyPast: [...state.historyPast.slice(-49), previous], historyFuture: [] };
+      }
+      return withHistory(state, { nodes });
+    });
   },
   onEdgesChange: (changes) => {
-    set((state) => withHistory(state, { edges: applyEdgeChanges(changes, state.edges) }));
+    set((state) => {
+      const edges = applyEdgeChanges(changes, state.edges);
+      return changes.every((change) => change.type === 'select') ? { edges } : withHistory(state, { edges });
+    });
   },
   onConnect: (connection) => {
     set((state) => withHistory(state, {

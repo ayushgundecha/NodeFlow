@@ -1,3 +1,4 @@
+import { navigateTabs } from "../shell/tabKeyboard";
 import { AlertCircle, CheckCircle2, FileJson2, LoaderCircle, MousePointer2, PanelRightClose } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import type { NodeFieldDefinition } from "../../domain/nodes/registry";
@@ -131,7 +132,7 @@ export function NodeInspector({ busy, collapsed, events, onToggle, validationIss
   return (
     <aside aria-label="Node inspector" className="nf-shell-panel nf-inspector">
       <header className="nf-panel-heading"><div><Icon aria-hidden="true" size={17} /><h2>Inspector</h2></div><button aria-label="Collapse inspector" className="nf-icon-button" onClick={onToggle} title="Collapse inspector" type="button"><PanelRightClose aria-hidden="true" size={17} /></button></header>
-      <div className="nf-inspector-tabs" role="tablist" aria-label="Inspector views">{views.map((item) => <button aria-controls={`inspector-panel-${item}`} aria-selected={view === item} id={`inspector-tab-${item}`} key={item} onClick={() => setViewState({ nodeId: node.id, view: item })} role="tab" tabIndex={view === item ? 0 : -1} type="button">{item}</button>)}</div>
+      <div className="nf-inspector-tabs" role="tablist" onKeyDown={navigateTabs} aria-label="Inspector views">{views.map((item) => <button aria-controls={`inspector-panel-${item}`} aria-selected={view === item} id={`inspector-tab-${item}`} key={item} onClick={() => setViewState({ nodeId: node.id, view: item })} role="tab" tabIndex={view === item ? 0 : -1} type="button">{item}</button>)}</div>
       <div aria-labelledby={`inspector-tab-${view}`} className={`nf-inspector-content${view !== "configure" ? " nf-inspector-content--data" : ""}`} id={`inspector-panel-${view}`} role="tabpanel">
         <div className="nf-selected-node"><span className={`nf-node-tone--${definition.category}`}><Icon aria-hidden="true" size={18} /></span><div><small>{nodeCategoryLabels[definition.category]}</small><strong>{node.data.label ?? definition.label}</strong></div></div>
         {view === "configure" ? <>{validationIssues.filter((issue) => issue.nodeId === node.id).map((issue) => <div className="nf-inspector-runtime-error" key={`${issue.code}.${issue.field}`} role="alert"><strong>{issue.code.replaceAll("_", " ")}</strong><span>{issue.message}</span></div>)}

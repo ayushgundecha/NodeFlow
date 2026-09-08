@@ -116,6 +116,19 @@ export const parseRunEvent = (frame: SseFrame): RunEvent => {
   if (frame.id !== null && Number(frame.id) !== value.sequence) {
     throw new RunProtocolError("SSE event ID did not match its payload sequence.");
   }
+  const invalidNode = value.type.startsWith('node.') && (typeof value.nodeId !== 'string' || !value.nodeId);
+  const invalidStart = value.type === 'run.started' && typeof value.clientRunId !== 'string';
+  const invalidDuration = ['node.completed', 'node.failed', 'run.completed', 'run.failed'].includes(value.type)
+    && (!Number.isSafeInteger(value.durationMs) || (value.durationMs as number) < 0);
+  const invalidError = value.type.endsWith('.failed') && (!isRecord(value.error)
+    || typeof value.error.code !== 'string' || typeof value.error.message !== 'string');
+  const invalidLog = value.type === 'node.log' && (typeof value.message !== 'string'
+    || !['stdout', 'stderr', 'system'].includes(value.stream as string));
+  const invalidSkip = value.type === 'node.skipped' && typeof value.reason !== 'string';
+  const invalidOutputs = value.type === 'run.completed' && !isRecord(value.outputs);
+  if (invalidNode || invalidStart || invalidDuration || invalidError || invalidLog || invalidSkip || invalidOutputs) {
+    throw new RunProtocolError('Run stream contained an invalid event payload.');
+  }
   return value as RunEvent;
 };
 
@@ -170,18 +183,23 @@ export const streamWorkflowRun = async (
     if (!response.ok || !response.body) throw new Error(`Run request failed with HTTP ${response.status}.`);
     const reader = response.body.getReader();
     let done = false;
-    while (!done && !state.terminal && state.protocolError === null) {
-      const chunk = await reader.read();
-      done = chunk.done;
-      const frames = decoder.push(textDecoder.decode(chunk.value, { stream: !done }));
-      if (done) frames.push(...decoder.finish());
-      for (const frame of frames) {
-        const event = parseRunEvent(frame);
-        const next = reduceRunEvent(state, event);
-        if (next !== state && next.events.length > state.events.length) options.onEvent?.(event, next);
-        state = next;
-        if (state.terminal || state.protocolError) break;
+    try {
+      while (!done && !state.terminal && state.protocolError === null) {
+        const chunk = await reader.read();
+        done = chunk.done;
+        const frames = decoder.push(textDecoder.decode(chunk.value, { stream: !done }));
+        if (done) frames.push(...decoder.finish());
+        for (const frame of frames) {
+          const event = parseRunEvent(frame);
+          const next = reduceRunEvent(state, event);
+          if (next !== state && next.events.length > state.events.length) options.onEvent?.(event, next);
+          state = next;
+          if (state.terminal || state.protocolError) break;
+        }
       }
+    } finally {
+      await reader.cancel().catch(() => undefined);
+      reader.releaseLock();
     }
     if (!state.terminal && !state.protocolError) state = { ...state, connection: "disconnected" };
     return state;

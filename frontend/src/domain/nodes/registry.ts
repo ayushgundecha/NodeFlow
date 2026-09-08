@@ -78,13 +78,13 @@ export const nodeRegistry = {
   httpRequest: {
     type: "httpRequest",
     label: "HTTP request",
-    description: "Call an allowlisted public HTTP endpoint.",
+    description: "Call a public HTTPS endpoint.",
     category: "data",
     icon: "globe",
     ports: [inputPort("body", "Body", "json", false), outputPort("response", "Response", "json")],
     fields: [
       { key: "method", label: "Method", kind: "select", helper: "HTTP method used for the request.", options: ["GET", "POST"], required: true },
-      { key: "url", label: "Public URL", kind: "url", helper: "Only allowlisted public HTTPS endpoints can be called.", required: true },
+      { key: "url", label: "Public URL", kind: "url", helper: "HTTPS only. Private addresses and credential headers are blocked.", required: true },
       { key: "body", label: "Request body", kind: "json", helper: "Optional JSON body available to POST requests." },
     ],
     createConfig: () => ({ method: "GET", url: "", headers: {}, body: null }),

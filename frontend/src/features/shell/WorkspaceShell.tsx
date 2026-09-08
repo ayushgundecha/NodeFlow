@@ -27,7 +27,6 @@ import { workflowSignature } from '../runs/runHistory';
 import { useRunHistory } from '../runs/useRunHistory';
 import type { RunEvent } from '../../contracts/types';
 import {
-  DEFAULT_PANEL_LAYOUT,
   PANEL_LIMITS,
   clampPanelSize,
   loadPanelLayout,
@@ -120,7 +119,7 @@ function IconButton({ disabled, icon: Icon, label, onClick, pressed }: IconButto
   );
 }
 
-function ProductHeader({ busy, example, name, onOpenWorkspace, onRun, onStop, validating }: { busy: boolean; example: boolean; name: string; onOpenWorkspace: () => void; onRun: () => void; onStop: () => void; validating: boolean }) {
+function ProductHeader({ busy, example, name, onOpenWorkspace, onRun, onStop, validating, saveStatus }: { saveStatus: string; busy: boolean; example: boolean; name: string; onOpenWorkspace: () => void; onRun: () => void; onStop: () => void; validating: boolean }) {
   const canUndo = useStore((state) => state.historyPast.length > 0);
   const canRedo = useStore((state) => state.historyFuture.length > 0);
   const undo = useStore((state) => state.undo);
@@ -128,7 +127,7 @@ function ProductHeader({ busy, example, name, onOpenWorkspace, onRun, onStop, va
   return (
     <header className="nf-product-header">
       <div className="nf-product-brand"><span className="nf-product-mark"><GitBranch aria-hidden="true" size={18} /></span><strong>NodeFlow</strong><span className="nf-product-edition">Studio</span></div>
-      <div className="nf-header-workflow"><button aria-haspopup="dialog" onClick={onOpenWorkspace} type="button"><span>{name}</span>{example ? <small>Example</small> : null}<ChevronDown aria-hidden="true" size={15} /></button><span><CheckCircle2 aria-hidden="true" size={13} /> Autosaved locally</span></div>
+      <div className="nf-header-workflow"><button aria-haspopup="dialog" onClick={onOpenWorkspace} type="button"><span>{name}</span>{example ? <small>Example</small> : null}<ChevronDown aria-hidden="true" size={15} /></button><span><CheckCircle2 aria-hidden="true" size={13} /> {saveStatus}</span></div>
       <nav aria-label="Workflow commands" className="nf-header-actions">
         <div className="nf-command-group"><IconButton disabled={!canUndo} icon={Undo2} label="Undo" onClick={undo} /><IconButton disabled={!canRedo} icon={Redo2} label="Redo" onClick={redo} /></div>
         <IconButton icon={Share2} label="Import or export workflow" onClick={onOpenWorkspace} />
@@ -142,7 +141,7 @@ function ProductHeader({ busy, example, name, onOpenWorkspace, onRun, onStop, va
 export function WorkspaceShell() {
   const compactViewer = useCompactViewer();
   const [layout, setLayout] = useState<PanelLayout>(() => {
-    const stored = typeof localStorage === 'undefined' ? DEFAULT_PANEL_LAYOUT : loadPanelLayout();
+    const stored = loadPanelLayout();
     return { ...stored, debuggerCollapsed: true, inspectorCollapsed: true, libraryCollapsed: false };
   });
   const [initialLoad] = useState(() => loadEditorWorkspace());
@@ -153,6 +152,7 @@ export function WorkspaceShell() {
       ? { id: currentTemplate.id, name: currentTemplate.name, description: currentTemplate.description }
       : { id: initialLoad.workspace.id, name: initialLoad.workspace.name, description: initialLoad.workspace.description };
   });
+  const [saveStatus, setSaveStatus] = useState("Browser-local draft");
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const [replayEvents, setReplayEvents] = useState<RunEvent[] | null>(null);
   const didHydrate = useRef(false);
@@ -191,7 +191,7 @@ export function WorkspaceShell() {
       return;
     }
     if (!didHydrate.current) return;
-    const timeout = window.setTimeout(() => saveEditorWorkspace(createEditorWorkspace({ ...workspaceMeta, nodes, edges })), 500);
+    const timeout = window.setTimeout(() => setSaveStatus(saveEditorWorkspace(createEditorWorkspace({ ...workspaceMeta, nodes, edges })) ? "Autosaved locally" : "Storage unavailable · Export to save"), 500);
     return () => window.clearTimeout(timeout);
   }, [edges, nodes, workspaceMeta]);
 
@@ -234,7 +234,7 @@ export function WorkspaceShell() {
     <>
       <a className="nf-skip-link" href="#workflow-canvas" onClick={skipToWorkflow}>Skip to workflow</a>
       <div className="nf-product-shell">
-        <ProductHeader busy={runtime.busy} example={Boolean(activeTemplate)} name={workspaceMeta.name} onOpenWorkspace={() => setWorkspaceMenuOpen(true)} onRun={runWorkflow} onStop={runtime.stop} validating={runtime.validating} />
+        <ProductHeader saveStatus={saveStatus} busy={runtime.busy} example={Boolean(activeTemplate)} name={workspaceMeta.name} onOpenWorkspace={() => setWorkspaceMenuOpen(true)} onRun={runWorkflow} onStop={runtime.stop} validating={runtime.validating} />
         <p aria-atomic="true" className="nf-visually-hidden" role="status">{runtime.statusMessage}</p>
         <div className="nf-workflow-content" id="workflow-content" tabIndex={-1}>
           {compactViewer ? <ResponsiveReadOnlyViewer description={workspaceMeta.description} name={workspaceMeta.name} nodeStatuses={runtime.nodeStatuses} nodes={nodes} /> : <main className="nf-workbench" style={style}>

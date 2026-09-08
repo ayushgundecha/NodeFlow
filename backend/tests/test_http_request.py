@@ -344,3 +344,25 @@ def test_httpx_transport_maps_timeout_without_exposing_details() -> None:
 
     assert error.value.code == "http_timeout"
     assert "private upstream detail" not in error.value.message
+
+
+@pytest.mark.parametrize("address", ["93.184.216.34", "2606:4700:4700::1111"])
+def test_transport_pins_validated_ip_and_preserves_tls_authority(address: str) -> None:
+    async def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.host == address
+        assert request.url.port == 8443
+        assert request.url.path == "/data"
+        assert request.url.query == b"page=1"
+        assert request.headers["host"] == "api.example.com:8443"
+        assert request.extensions["sni_hostname"] == "api.example.com"
+        return httpx.Response(200, json={"ok": True})
+
+    destination = PublicDestination(
+        url="https://api.example.com:8443/data?page=1",
+        hostname="api.example.com",
+        port=8443,
+        addresses=(address,),
+    )
+    transport = HttpxTransport(lambda: httpx.AsyncClient(transport=httpx.MockTransport(handler)))
+    result = asyncio.run(transport.request("GET", destination, headers={}, body=None))
+    assert result.url == destination.url

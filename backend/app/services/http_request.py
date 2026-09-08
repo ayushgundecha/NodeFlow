@@ -207,13 +207,19 @@ class HttpxTransport:
     ) -> BoundedHttpResponse:
         response_data: BoundedHttpResponse | None = None
         response_too_large = False
+        # Connect to the validated address, never resolve the hostname a second time.
+        # Retain the original authority for HTTP routing and TLS verification.
+        original_url = httpx.URL(destination.url)
+        pinned_url = original_url.copy_with(host=destination.addresses[0])
+        request_headers = {**headers, "host": original_url.netloc.decode("ascii")}
         try:
             async with (
                 self._client_factory() as client,
                 client.stream(
                     method,
-                    destination.url,
-                    headers=dict(headers),
+                    pinned_url,
+                    headers=request_headers,
+                    extensions={"sni_hostname": original_url.raw_host.decode("ascii")},
                     json=body if method == "POST" else None,
                 ) as response,
             ):
@@ -228,7 +234,7 @@ class HttpxTransport:
                         status_code=response.status_code,
                         headers=dict(response.headers),
                         content=bytes(content),
-                        url=str(response.url),
+                        url=destination.url,
                     )
         except AdapterExecutionError:
             raise

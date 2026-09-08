@@ -1,0 +1,14 @@
+{
+  "date": "2026-09-08",
+  "npm": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "python_packages_audited": 31,
+  "python_vulnerabilities": 0,
+  "client_bundle_known_credential_patterns": "No matches; pattern scan is not a universal secret detector."
+}

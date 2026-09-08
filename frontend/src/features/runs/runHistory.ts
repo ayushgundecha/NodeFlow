@@ -1,11 +1,32 @@
 import type { RunEvent } from "../../contracts/types";
 import type { EditorWorkspace } from "../editor/workspacePersistence";
 import { replayRunEvents } from "./runReducer";
+import { initialRunEventState, parseRunEvent, reduceRunEvent } from '../runtime/runEventStream';
 
 export const RUN_HISTORY_SCHEMA = "nodeflow.run-history/1";
 export const RUN_HISTORY_LIMIT = 10;
 const DATABASE_NAME = "nodeflow-local";
 const STORE_NAME = "run-traces";
+
+export function isStoredTrace(value: unknown): value is StoredRunTrace {
+  if (!value || typeof value !== 'object') return false;
+  const trace = value as Partial<StoredRunTrace>;
+  if (trace.schema !== RUN_HISTORY_SCHEMA || typeof trace.runId !== 'string'
+    || typeof trace.completedAt !== 'string' || !Number.isFinite(Date.parse(trace.completedAt))
+    || typeof trace.workflowFormat !== 'string' || typeof trace.workflowId !== 'string'
+    || typeof trace.workflowSignature !== 'string' || !Array.isArray(trace.events)
+    || !trace.events.length || trace.events.length > 1000) return false;
+  try {
+    let state = initialRunEventState();
+    for (const [index, raw] of trace.events.entries()) {
+      const event = parseRunEvent({ data: JSON.stringify(raw), event: null, id: null });
+      if (state.terminal || event.runId !== trace.runId || event.sequence !== index) return false;
+      state = reduceRunEvent(state, event);
+      if (state.protocolError) return false;
+    }
+    return state.terminal;
+  } catch { return false; }
+}
 
 export type StoredRunTrace = {
   completedAt: string;
@@ -102,25 +123,28 @@ const openDatabase = (factory: IDBFactory) => new Promise<IDBDatabase>((resolve,
 });
 
 export async function loadRunHistory(factory: IDBFactory | undefined = globalThis.indexedDB): Promise<StoredRunTrace[]> {
-  if (!factory) return [];
+  if (!factory) throw new Error('Local run history is unavailable.');
   const database = await openDatabase(factory);
   try {
     const transaction = database.transaction(STORE_NAME, "readonly");
-    const records = await requestResult(transaction.objectStore(STORE_NAME).getAll() as IDBRequest<StoredRunTrace[]>);
+    const records = await requestResult(transaction.objectStore(STORE_NAME).getAll() as IDBRequest<unknown[]>);
     await transactionDone(transaction);
-    return records.filter((record) => record.schema === RUN_HISTORY_SCHEMA).sort((a, b) => b.completedAt.localeCompare(a.completedAt));
+    return records.filter(isStoredTrace).sort((a, b) => b.completedAt.localeCompare(a.completedAt)).slice(0, RUN_HISTORY_LIMIT);
   } finally { database.close(); }
 }
 
 export async function saveRunTrace(trace: StoredRunTrace, factory: IDBFactory | undefined = globalThis.indexedDB) {
-  if (!factory) return;
+  if (!factory) throw new Error('Local run history is unavailable.');
   const database = await openDatabase(factory);
   try {
     const transaction = database.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
     store.put(trace);
-    const records = await requestResult(store.getAll() as IDBRequest<StoredRunTrace[]>);
-    records.sort((a, b) => b.completedAt.localeCompare(a.completedAt)).slice(RUN_HISTORY_LIMIT).forEach((record) => store.delete(record.runId));
+    const records = await requestResult(store.getAll() as IDBRequest<unknown[]>);
+    records.filter((record) => !isStoredTrace(record)).forEach((record) => {
+      if (record && typeof record === "object" && "runId" in record && typeof record.runId === "string") store.delete(record.runId);
+    });
+    records.filter(isStoredTrace).sort((a, b) => b.completedAt.localeCompare(a.completedAt)).slice(RUN_HISTORY_LIMIT).forEach((record) => store.delete(record.runId));
     await transactionDone(transaction);
   } finally { database.close(); }
 }

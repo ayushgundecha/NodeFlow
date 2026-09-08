@@ -8,6 +8,14 @@ const createStorage = (): Storage => {
 };
 
 describe("editor workspace persistence v2", () => {
+  it("keeps the editor usable when browser storage throws", () => {
+    const storage = createStorage();
+    storage.getItem = () => { throw new Error("Storage blocked"); };
+    storage.setItem = () => { throw new Error("Storage blocked"); };
+    expect(loadEditorWorkspace(storage)).toEqual({ status: "unavailable" });
+    expect(saveEditorWorkspace(createEditorWorkspace(defaultWorkflowTemplate), storage)).toBe(false);
+  });
+
   it("round-trips a validated versioned workspace", () => {
     const storage = createStorage();
     const workspace = createEditorWorkspace({ ...defaultWorkflowTemplate }, new Date("2026-09-02T00:00:00Z"));

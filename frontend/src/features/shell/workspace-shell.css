@@ -165,7 +165,7 @@
 .nf-registry-node--running { border-color: var(--nf-color-action); box-shadow: var(--nf-shadow-md), 0 0 0 2px var(--nf-color-selection); }
 .nf-registry-node--succeeded { border-color: var(--nf-color-success-border); }
 .nf-registry-node--failed, .nf-registry-node--invalid { border-color: var(--nf-color-danger); }
-.nf-registry-node--skipped { border-style: dashed; opacity: .72; }
+.nf-registry-node--skipped { border-style: dashed; }
 .nf-registry-node__select { width: 100%; min-height: 66px; position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--nf-space-2); padding: var(--nf-space-3); border: 0; border-radius: inherit; color: var(--nf-color-foreground); background: transparent; text-align: left; cursor: pointer; }
 .nf-registry-node__select:has(.nf-registry-node__status) { grid-template-columns: auto minmax(0, 1fr); padding-top: 34px; }
 .nf-registry-node__icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; }

@@ -51,9 +51,9 @@ export function normalizePanelLayout(layout: PanelLayout): PanelLayout {
   };
 }
 
-export function loadPanelLayout(storage: Pick<Storage, 'getItem'> = localStorage): PanelLayout {
+export function loadPanelLayout(storage?: Pick<Storage, 'getItem'>): PanelLayout {
   try {
-    const stored = storage.getItem(PANEL_LAYOUT_STORAGE_KEY);
+    const stored = (storage ?? localStorage).getItem(PANEL_LAYOUT_STORAGE_KEY);
     const parsed: unknown = stored ? JSON.parse(stored) : null;
     return isPanelLayout(parsed) ? normalizePanelLayout(parsed) : DEFAULT_PANEL_LAYOUT;
   } catch {
@@ -61,9 +61,9 @@ export function loadPanelLayout(storage: Pick<Storage, 'getItem'> = localStorage
   }
 }
 
-export function savePanelLayout(layout: PanelLayout, storage: Pick<Storage, 'setItem'> = localStorage) {
+export function savePanelLayout(layout: PanelLayout, storage?: Pick<Storage, 'setItem'>) {
   try {
-    storage.setItem(PANEL_LAYOUT_STORAGE_KEY, JSON.stringify(normalizePanelLayout(layout)));
+    (storage ?? localStorage).setItem(PANEL_LAYOUT_STORAGE_KEY, JSON.stringify(normalizePanelLayout(layout)));
   } catch {
     // The shell remains usable when storage is unavailable or full.
   }

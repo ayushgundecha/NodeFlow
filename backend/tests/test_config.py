@@ -26,5 +26,26 @@ def test_invalid_origin_fails_with_actionable_configuration_error() -> None:
             {
                 "NODEFLOW_ENV": "production",
                 "NODEFLOW_CORS_ORIGINS": "javascript:alert(1)",
+                "NODEFLOW_RATE_LIMIT_SALT": "s" * 32,
             }
         )
+
+
+def test_production_rejects_missing_or_placeholder_rate_salt() -> None:
+    for salt in ("", "short", "replace-with-at-least-32-random-characters-in-production"):
+        with pytest.raises(RuntimeError, match="NODEFLOW_RATE_LIMIT_SALT"):
+            Settings.from_environment(
+                {
+                    "NODEFLOW_ENV": "production",
+                    "NODEFLOW_CORS_ORIGINS": "https://example.com",
+                    "NODEFLOW_RATE_LIMIT_SALT": salt,
+                }
+            )
+
+
+@pytest.mark.parametrize(
+    "origin", ["https://example.com/path", "https://user:pass@example.com", "https://*.example.com"]
+)
+def test_cors_accepts_origins_only(origin: str) -> None:
+    with pytest.raises(RuntimeError, match="Invalid NodeFlow configuration"):
+        Settings.from_environment({"NODEFLOW_CORS_ORIGINS": origin})

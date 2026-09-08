@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from collections.abc import Mapping
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
@@ -26,9 +27,20 @@ class Settings(BaseModel):
     def validate_production(self) -> Settings:
         if self.environment == "production" and not self.cors_origins:
             raise ValueError("NODEFLOW_CORS_ORIGINS is required when NODEFLOW_ENV=production")
-        invalid = [
-            origin for origin in self.cors_origins if not origin.startswith(("http://", "https://"))
-        ]
+        invalid = []
+        for origin in self.cors_origins:
+            parsed = urlsplit(origin)
+            if (
+                parsed.scheme not in {"http", "https"}
+                or not parsed.hostname
+                or parsed.username
+                or parsed.password
+                or parsed.path
+                or parsed.query
+                or parsed.fragment
+                or "*" in origin
+            ):
+                invalid.append(origin)
         if invalid:
             raise ValueError("CORS origins must be absolute http(s) URLs")
         return self
@@ -48,6 +60,14 @@ class Settings(BaseModel):
             origins: tuple[str, ...] = () if deployment == "production" else LOCAL_ORIGINS
         else:
             origins = tuple(origin.strip() for origin in raw_origins.split(",") if origin.strip())
+
+        if deployment == "production" and origins:
+            salt = values.get("NODEFLOW_RATE_LIMIT_SALT", "")
+            if len(salt) < 32 or salt.startswith("replace-with"):
+                raise RuntimeError(
+                    "NODEFLOW_RATE_LIMIT_SALT must contain at least 32 random "
+                    "characters in production."
+                )
 
         try:
             return cls(environment=deployment, cors_origins=origins)

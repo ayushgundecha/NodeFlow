@@ -29,3 +29,8 @@ coverage/
 coverage.xml
 .vercel
 .env*
+
+# Browser verification output
+frontend/test-results/
+frontend/playwright-report/
+docs/media/*.webm

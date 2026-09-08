@@ -63,7 +63,7 @@ export function RegistryWorkflowCanvas({ debuggerCollapsed, description, example
   const fitView = useCallback(() => {
     const instance = reactFlow.current;
     if (!instance) return;
-    instance.fitView({ duration: 180, maxZoom: 1, padding: 0.12 });
+    instance.fitView({ duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 180, maxZoom: 1, padding: 0.12 });
     window.setTimeout(() => setZoom(Math.round(instance.getZoom() * 100)), 220);
   }, []);
   useEffect(() => {
@@ -142,6 +142,7 @@ export function RegistryWorkflowCanvas({ debuggerCollapsed, description, example
           fitView
           minZoom={0.35}
           nodeTypes={nodeTypes}
+          nodesFocusable={false}
           nodes={flowNodes}
           onConnect={connect}
           onDragEnter={(event) => { if (event.dataTransfer.types.includes(NODEFLOW_DRAG_TYPE)) setDropActive(true); }}

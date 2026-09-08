@@ -1,3 +1,4 @@
+import { navigateTabs } from "../shell/tabKeyboard";
 import {
   AlertCircle,
   CheckCircle2,
@@ -141,16 +142,18 @@ export function DebuggerPanel({ busy, collapsed, events: liveEvents, historyAvai
   };
 
   const hasEvents = events.length > 0;
-  const interrupted = !busy && retryable && summary.status === "running";
+  const stopped = !busy && statusMessage === "Workflow run stopped.";
+  const interrupted = !busy && (retryable || stopped) && summary.status === "running";
   const workflowOutputSelected = selectedEvent?.type === "run.completed";
   const selectedLabel = workflowOutputSelected ? "Workflow output" : selectedNodeId ? nodeLabels[selectedNodeId] ?? selectedNodeId : "Workflow";
   return (
     <section aria-labelledby="debugger-title" className="nf-debugger" hidden={collapsed}>
       <header className="nf-debugger__header">
-        <div><TerminalSquare aria-hidden="true" size={17} /><h2 id="debugger-title">Run debugger</h2><span className={`nf-shell-badge nf-shell-badge--${interrupted ? "failed" : summary.status}`}>{busy ? <LoaderCircle aria-hidden="true" size={12} /> : interrupted || summary.status === "failed" ? <AlertCircle aria-hidden="true" size={12} /> : summary.status === "completed" ? <CheckCircle2 aria-hidden="true" size={12} /> : <Clock3 aria-hidden="true" size={12} />}{busy ? "Running live" : interrupted ? "Interrupted" : hasEvents ? summary.status : "Ready"}</span></div>
-        <div role="tablist" aria-label="Debugger views">
+        <div><TerminalSquare aria-hidden="true" size={17} /><h2 id="debugger-title">Run debugger</h2><span className={`nf-shell-badge nf-shell-badge--${interrupted ? "failed" : summary.status}`}>{busy ? <LoaderCircle aria-hidden="true" size={12} /> : interrupted || summary.status === "failed" ? <AlertCircle aria-hidden="true" size={12} /> : summary.status === "completed" ? <CheckCircle2 aria-hidden="true" size={12} /> : <Clock3 aria-hidden="true" size={12} />}{busy ? "Running live" : interrupted ? stopped ? "Stopped" : "Interrupted" : hasEvents ? summary.status : "Ready"}</span></div>
+        <div role="tablist" onKeyDown={navigateTabs} aria-label="Debugger views">
           {(["timeline", "data", "timing", "history"] as const).map((item) => <button aria-controls={`debugger-${item}`} aria-selected={view === item} className={`nf-debug-tab${view === item ? " nf-debug-tab--active" : ""}`} id={`debugger-tab-${item}`} key={item} onClick={() => setView(item)} role="tab" type="button">{item === "data" ? "Node data" : item === "history" ? "Runs" : item === "timing" ? "Timing" : "Timeline"}</button>)}
-          <button aria-label="Collapse debugger" className="nf-icon-button" onClick={onToggle} title="Collapse debugger" type="button"><PanelBottomClose aria-hidden="true" size={17} /></button>
+        </div>
+        <div><button aria-label="Collapse debugger" className="nf-icon-button" onClick={onToggle} title="Collapse debugger" type="button"><PanelBottomClose aria-hidden="true" size={17} /></button>
         </div>
       </header>
       {!hasEvents ? <div className="nf-debugger__empty">
@@ -168,7 +171,7 @@ export function DebuggerPanel({ busy, collapsed, events: liveEvents, historyAvai
         </div>
         {summary.status === "completed" && finalNodeEvent && completedRunEvent ? <div className="nf-run-outcome" role="status"><CheckCircle2 aria-hidden="true" size={17} /><span><strong>Workflow completed</strong><small>Your final result is ready in {nodeLabels[finalNodeEvent.nodeId] ?? finalNodeEvent.nodeId}.</small></span><button onClick={() => { setSelectedSequence(completedRunEvent.sequence); onInspectNode(finalNodeEvent.nodeId); showData("output"); }} type="button">View final output</button></div> : null}
         {summary.status === "failed" && failedNodeEvent ? <div className="nf-run-outcome nf-run-outcome--failed" role="alert"><AlertCircle aria-hidden="true" size={17} /><span><strong>Workflow stopped at {nodeLabels[failedNodeEvent.nodeId] ?? failedNodeEvent.nodeId}</strong><small>{failedNodeEvent.error.message}</small></span><button onClick={() => { selectEvent(failedNodeEvent); showData("error"); }} type="button">View error</button></div> : null}
-        {interrupted ? <div className="nf-run-outcome nf-run-outcome--failed" role="alert"><AlertCircle aria-hidden="true" size={17} /><span><strong>Run connection interrupted</strong><small>{statusMessage}</small></span><button onClick={onRun} type="button">Retry run</button></div> : null}
+        {interrupted ? <div className="nf-run-outcome nf-run-outcome--failed" role="alert"><AlertCircle aria-hidden="true" size={17} /><span><strong>{stopped ? "Run stopped" : "Run connection interrupted"}</strong><small>{statusMessage}</small></span><button onClick={onRun} type="button">Retry run</button></div> : null}
         <ol className="nf-debugger__timeline" aria-label="Run events in server order">
           {events.map((event) => {
             const nodeId = eventNodeId(event);
@@ -181,7 +184,7 @@ export function DebuggerPanel({ busy, collapsed, events: liveEvents, historyAvai
       {hasEvents && view === "data" ? <div aria-labelledby="debugger-tab-data" className="nf-debugger__body nf-debugger__body--data" id="debugger-data" role="tabpanel">
         <aside className="nf-debug-data-nav">
           <div><FileJson2 aria-hidden="true" size={16} /><span><small>{workflowOutputSelected ? "Completed run" : "Selected node"}</small><strong>{selectedLabel}</strong></span></div>
-          <div role="tablist" aria-label="Selected node data">
+          <div role="tablist" onKeyDown={navigateTabs} aria-label="Selected node data">
             {(workflowOutputSelected ? ["output"] as const : ["input", "output", "logs", "error"] as const).map((item) => <button aria-selected={dataView === item} key={item} onClick={() => setDataView(item)} role="tab" type="button">{item}<span>{item === "logs" ? details.logs.length : item === "error" && details.error ? 1 : ""}</span></button>)}
           </div>
         </aside>

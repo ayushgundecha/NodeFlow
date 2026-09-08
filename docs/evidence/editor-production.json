@@ -1,0 +1,17 @@
+{
+  "clickToTwoFramesMs": [
+    44.59999999962747,
+    31.200000001117587,
+    29.299999998882413,
+    32.19999999925494,
+    30.199999999254942,
+    31.299999998882413,
+    30.59999999962747,
+    31.5,
+    30.5,
+    30.799999998882413
+  ],
+  "reactProfile": null,
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+  "conditions": "Local production build, 1440x1000, reduced motion; click-to-two-animation-frames proxy, not field INP."
+}

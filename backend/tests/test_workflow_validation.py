@@ -11,6 +11,12 @@ from app.services.workflow_validation import (
 )
 
 
+def test_empty_graph_returns_an_actionable_validation_issue() -> None:
+    result = validate_workflow(WorkflowDefinition(id="empty", name="Empty"))
+    assert not result.valid
+    assert result.errors[0].code == "graph_empty"
+
+
 def node(node_id: str, node_type: str) -> dict[str, object]:
     configs: dict[str, dict[str, object]] = {
         "manualInput": {"inputKey": "payload", "defaultValue": None},

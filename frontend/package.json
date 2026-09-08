@@ -11,11 +11,13 @@
     "start": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b --pretty false",
+    "typecheck": "tsc -b --pretty false && tsc -p tsconfig.e2e.json",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run --passWithNoTests",
     "contracts:generate": "openapi-typescript ../backend/openapi.json -o src/contracts/generated/api.ts",
-    "contracts:check": "npm run contracts:generate && git diff --exit-code -- ../backend/openapi.json src/contracts/generated/api.ts"
+    "contracts:check": "npm run contracts:generate && git diff --exit-code -- ../backend/openapi.json src/contracts/generated/api.ts",
+    "test:e2e": "npm run build && playwright test",
+    "test:e2e:update": "npm run build && playwright test --update-snapshots"
   },
   "dependencies": {
     "@emotion/react": "11.13.5",
@@ -28,7 +30,9 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "9.39.5",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/typography": "0.5.19",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.0",

@@ -1,0 +1,23 @@
+{
+  "clickToTwoFramesMs": [
+    111.59999999962747,
+    30.700000001117587,
+    26.300000000745058,
+    31.09999999962747,
+    25.59999999962747,
+    31.200000001117587,
+    26.200000001117587,
+    32.59999999962747,
+    27.5
+  ],
+  "reactProfile": {
+    "id": "RegistryWorkflowCanvas",
+    "phase": "update",
+    "count": 99,
+    "lastMs": 0.1,
+    "worstMs": 6.3,
+    "baseMs": 1.6
+  },
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+  "conditions": "Local Vite development build, React StrictMode, 1440x1000, reduced motion; click-to-two-animation-frames proxy, not field INP."
+}

@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 const typedFiles = ["src/**/*.{ts,tsx}", "vite.config.ts", "vitest.config.ts"];
 
 export default tseslint.config(
-  { ignores: ["../backend/public", "coverage", "dist", "src/contracts/generated"] },
+  { ignores: ["../backend/public", "coverage", "dist", "src/contracts/generated", "playwright-report", "test-results", "e2e", "playwright.config.ts", "scripts"] },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked.map((config) => ({
     ...config,
