@@ -16,6 +16,7 @@ frontend/playwright-report/
 frontend/coverage/
 frontend/scripts/
 docs/
-design-system/
+# Exclude root design documentation, preserving frontend/src/design-system/.
+/design-system/
 .env*
 *.webm
