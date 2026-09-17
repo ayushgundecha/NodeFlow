@@ -61,7 +61,7 @@ sequenceDiagram
   DAG-->>Editor: run.completed / run.failed
   Editor->>History: Save terminal trace locally
   Visitor->>Editor: Replay or compare
-  History-->>Editor: Recorded events; no provider call
+  History-->>Editor: Recorded events, no provider call
 ```
 
 The scheduler runs up to four ready nodes concurrently. It waits for dependencies, passes values by named handles, and marks inactive condition branches as skipped. Merge receives results from the active branches. Graphs are bounded to 25 nodes and 40 edges; runs have a 30-second deadline. Editing the executable graph aborts the current client request and clears obsolete live state.
